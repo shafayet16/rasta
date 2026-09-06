@@ -1,53 +1,29 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useMemo, useEffect, useRef } from "react";
 import gsap from "gsap";
 
-const initialProducts = [
-  {
-    id: 1,
-    name: "Black Essential Tee",
-    price: 1490,
-    priceFormatted: "৳ 1,490.00",
-    image: "/blacktee.png",
-    inStock: true,
-  },
-  {
-    id: 2,
-    name: "Dark Grey Trousers",
-    price: 2290,
-    priceFormatted: "৳ 2,290.00",
-    image: "/dark-gray-trousers.jpeg",
-    inStock: true,
-  },
-  {
-    id: 3,
-    name: "Grey Trousers",
-    price: 2290,
-    priceFormatted: "৳ 2,290.00",
-    image: "/gray-trousers.jpeg",
-    inStock: false,
-  },
-  {
-    id: 4,
-    name: "Sum Shirt",
-    price: 800,
-    priceFormatted: "৳ 800.00",
-    image: "/blacktee.png",
-    inStock: true,
-  },
-  {
-    id: 5,
-    name: "Dope Pants",
-    price: 1200,
-    priceFormatted: "৳ 1200.00",
-    image: "/dark-gray-trousers.jpeg",
-    inStock: true,
-  },
-];
+interface Product {
+  id: string | number;
+  name: string;
+  slug: string;
+  price: number;
+  price_formatted?: string;
+  priceFormatted?: string;
+  images: string[];
+  image?: string;
+  description?: string;
+  in_stock?: boolean;
+  inStock?: boolean;
+}
 
 export default function ShopPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [availability, setAvailability] = useState<"all" | "inStock" | "outOfStock">("all");
   const [sortBy, setSortBy] = useState<"featured" | "priceAsc" | "priceDesc">("featured");
   const [showAvailabilityMenu, setShowAvailabilityMenu] = useState(false);
@@ -55,28 +31,48 @@ export default function ShopPage() {
 
   const gridRef = useRef<HTMLDivElement>(null);
 
+  // Fetch products from Neon DB API
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/products");
+        if (!res.ok) throw new Error("Failed to load products");
+        const data = await res.json();
+        setProducts(data);
+      } catch (err: any) {
+        console.error("Error loading products:", err);
+        setError(err.message || "Failed to fetch products");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
   // Filter and Sort Logic
   const filteredProducts = useMemo(() => {
-    let result = [...initialProducts];
+    let result = [...products];
 
     if (availability === "inStock") {
-      result = result.filter((p) => p.inStock);
+      result = result.filter((p) => p.in_stock ?? p.inStock ?? true);
     } else if (availability === "outOfStock") {
-      result = result.filter((p) => !p.inStock);
+      result = result.filter((p) => !(p.in_stock ?? p.inStock ?? true));
     }
 
     if (sortBy === "priceAsc") {
-      result.sort((a, b) => a.price - b.price);
+      result.sort((a, b) => Number(a.price) - Number(b.price));
     } else if (sortBy === "priceDesc") {
-      result.sort((a, b) => b.price - a.price);
+      result.sort((a, b) => Number(b.price) - Number(a.price));
     }
 
     return result;
-  }, [availability, sortBy]);
+  }, [products, availability, sortBy]);
 
   // Entrance transition for filtered products
   useEffect(() => {
-    if (gridRef.current) {
+    if (gridRef.current && gridRef.current.children.length > 0) {
       gsap.fromTo(
         gridRef.current.children,
         { opacity: 0, y: 20 },
@@ -215,50 +211,83 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* ENLARGED PRODUCT GRID (MATCHES SOUL GALLERY SPACING & SCALE) */}
-        <div
-          ref={gridRef}
-          className="mt-12 grid grid-cols-2 gap-x-8 gap-y-16 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-        >
-          {filteredProducts.map((product) => (
-            <article
-              key={product.id}
-              className="group flex flex-col text-left"
-            >
-              <div className="relative aspect-[3/4] w-full overflow-hidden mix-blend-multiply">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                  className="object-contain object-center transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-[1.05]"
-                />
-                {!product.inStock && (
-                  <span className="absolute top-2 left-2 bg-black px-2 py-1 text-[9px] font-medium tracking-widest text-white uppercase">
-                    Sold Out
-                  </span>
-                )}
-              </div>
+        {/* LOADING & ERROR STATES */}
+        {loading && (
+          <div className="mt-24 text-center text-[11px] font-medium tracking-[0.2em] uppercase text-black/40">
+            LOADING CATALOG...
+          </div>
+        )}
 
-              <div className="mt-5 flex items-start justify-between gap-1 text-[11px] font-normal tracking-wide uppercase text-black">
-                <h2 className="leading-tight">{product.name}</h2>
-                {product.inStock && (
-                  <button
-                    type="button"
-                    className="text-[14px] leading-none text-black/60 transition-colors hover:text-black"
-                    aria-label={`Add ${product.name} to cart`}
-                  >
-                    +
-                  </button>
-                )}
-              </div>
+        {error && (
+          <div className="mt-24 text-center text-[11px] font-medium tracking-[0.2em] uppercase text-red-500">
+            {error}
+          </div>
+        )}
 
-              <p className="mt-1 text-[11px] font-normal text-black/60">
-                {product.priceFormatted}
-              </p>
-            </article>
-          ))}
-        </div>
+        {!loading && !error && filteredProducts.length === 0 && (
+          <div className="mt-24 text-center text-[11px] font-medium tracking-[0.2em] uppercase text-black/40">
+            NO PRODUCTS AVAILABLE
+          </div>
+        )}
+
+        {/* PRODUCT GRID */}
+        {!loading && !error && (
+          <div
+            ref={gridRef}
+            className="mt-12 grid grid-cols-2 gap-x-8 gap-y-16 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+          >
+            {filteredProducts.map((product) => {
+              const mainImage = product.images?.[0] || product.image || "/placeholder.png";
+              const formattedPrice =
+                product.price_formatted ||
+                product.priceFormatted ||
+                `৳ ${Number(product.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+              const isAvailable = product.in_stock ?? product.inStock ?? true;
+
+              return (
+                <article key={product.id} className="group flex flex-col text-left">
+                  <Link href={`/product/${product.slug || product.id}`}>
+                    <div className="relative aspect-[3/4] w-full overflow-hidden mix-blend-multiply bg-black/5">
+                      <Image
+                        src={mainImage}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                        className="object-cover object-center transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-[1.05]"
+                      />
+                      {!isAvailable && (
+                        <span className="absolute top-2 left-2 bg-black px-2 py-1 text-[9px] font-medium tracking-widest text-white uppercase">
+                          Sold Out
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+
+                  <div className="mt-5 flex items-start justify-between gap-1 text-[11px] font-normal tracking-wide uppercase text-black">
+                    <h2 className="leading-tight">
+                      <Link href={`/product/${product.slug || product.id}`} className="hover:opacity-60 transition-opacity">
+                        {product.name}
+                      </Link>
+                    </h2>
+                    {isAvailable && (
+                      <button
+                        type="button"
+                        className="text-[14px] leading-none text-black/60 transition-colors hover:text-black"
+                        aria-label={`Add ${product.name} to cart`}
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
+
+                  <p className="mt-1 text-[11px] font-normal text-black/60">
+                    {formattedPrice}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
     </main>
   );
