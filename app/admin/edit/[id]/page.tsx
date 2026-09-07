@@ -25,23 +25,28 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     async function fetchProduct() {
       try {
+        setLoading(true);
         const res = await fetch(`/api/products/${id}`);
-        if (!res.ok) throw new Error("Product not found");
         const data = await res.json();
 
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to fetch product");
+        }
+
         setName(data.name || "");
-        setPrice(data.price || "");
+        setPrice(data.price ? String(data.price) : "");
         setDescription(data.description || "");
         setInStock(data.in_stock ?? true);
         setSelectedSizes(data.sizes || ["S", "M", "L", "XL"]);
         setExistingImages(data.images || []);
-      } catch (err) {
-        console.error(err);
+      } catch (err: any) {
+        console.error("Fetch product error:", err);
+        alert(err.message || "Product not found");
       } finally {
         setLoading(false);
       }
     }
-    fetchProduct();
+    if (id) fetchProduct();
   }, [id]);
 
   function toggleSize(size: string) {
@@ -53,16 +58,27 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files) return;
-    const files = Array.from(e.target.files);
-    setNewFiles(files);
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const selectedFiles = Array.from(e.target.files);
+    
+    setNewFiles((prev) => [...prev, ...selectedFiles]);
 
-    const previewUrls = files.map((file) => URL.createObjectURL(file));
-    setPreviews(previewUrls);
+    const newPreviewUrls = selectedFiles.map((file) => URL.createObjectURL(file));
+    setPreviews((prev) => [...prev, ...newPreviewUrls]);
+
+    e.target.value = "";
   }
 
   function removeExistingImage(indexToRemove: number) {
-    setExistingImages(existingImages.filter((_, idx) => idx !== indexToRemove));
+    setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  }
+
+  function removeNewFile(indexToRemove: number) {
+    URL.revokeObjectURL(previews[indexToRemove]);
+
+    setNewFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    setPreviews((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   }
 
   async function handleUpdate(e: React.FormEvent) {
@@ -115,7 +131,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to update product");
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || "Failed to update product");
+      }
 
       router.push("/admin");
     } catch (err: any) {
@@ -199,19 +218,20 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             />
           </div>
 
+          {/* CURRENT IMAGES */}
           {existingImages.length > 0 && (
             <div>
-              <label className="mb-2 block text-black/60">Current Images</label>
+              <label className="mb-2 block text-black/60">Current Images ({existingImages.length})</label>
               <div className="grid grid-cols-4 gap-2">
                 {existingImages.map((src, index) => (
                   <div key={index} className="relative group border border-black/10">
-                    <img src={src} alt="Existing" className="h-20 w-full object-cover" />
+                    <img src={src} alt="Existing" className="h-20 w-full object-contain p-1" />
                     <button
                       type="button"
                       onClick={() => removeExistingImage(index)}
-                      className="absolute top-0 right-0 bg-red-600 text-white text-[9px] px-1.5 py-0.5 opacity-80 hover:opacity-100"
+                      className="absolute top-0 right-0 bg-black text-white text-[9px] px-1.5 py-0.5 hover:bg-red-600 transition-colors"
                     >
-                      X
+                      ✕
                     </button>
                   </div>
                 ))}
@@ -219,8 +239,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
 
+          {/* UPLOAD MULTIPLE IMAGES */}
           <div>
-            <label className="mb-2 block text-black/60">Add More Images (Optional)</label>
+            <label className="mb-2 block text-black/60">Add More Images</label>
             <input
               type="file"
               accept="image/*"
@@ -230,17 +251,26 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             />
           </div>
 
+          {/* PREVIEWS OF NEW IMAGES */}
           {previews.length > 0 && (
             <div>
               <label className="mb-2 block text-black/60">New Images to Upload ({previews.length})</label>
               <div className="grid grid-cols-4 gap-2">
                 {previews.map((src, index) => (
-                  <img
-                    key={index}
-                    src={src}
-                    alt="New Upload Preview"
-                    className="h-20 w-full object-cover border border-black/10"
-                  />
+                  <div key={index} className="relative group border border-black/10">
+                    <img
+                      src={src}
+                      alt="New Preview"
+                      className="h-20 w-full object-contain p-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeNewFile(index)}
+                      className="absolute top-0 right-0 bg-black text-white text-[9px] px-1.5 py-0.5 hover:bg-red-600 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>

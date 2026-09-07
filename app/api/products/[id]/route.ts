@@ -9,13 +9,13 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    if (!id) {
+    if (!id || id === "undefined") {
       return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
     }
 
     const result = await sql`
       DELETE FROM products
-      WHERE id = ${id}
+      WHERE id::text = ${id} OR slug = ${id}
       RETURNING id;
     `;
 
@@ -33,7 +33,7 @@ export async function DELETE(
   }
 }
 
-// 2. GET SINGLE PRODUCT (For Edit page)
+// 2. GET SINGLE PRODUCT (Matches by ID, UUID, or Slug)
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -41,9 +41,15 @@ export async function GET(
   try {
     const { id } = await params;
 
+    if (!id || id === "undefined") {
+      return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
+    }
+
+    // Casts id to text so PostgreSQL safely matches integer, string/UUID, or slug
     const product = await sql`
-      SELECT * FROM products
-      WHERE id = ${id};
+      SELECT * FROM products 
+      WHERE id::text = ${id} OR slug = ${id}
+      LIMIT 1;
     `;
 
     if (product.length === 0) {
@@ -60,7 +66,7 @@ export async function GET(
   }
 }
 
-// 3. UPDATE PRODUCT (For Edit form submission)
+// 3. UPDATE PRODUCT
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -88,9 +94,13 @@ export async function PUT(
         in_stock = ${inStock},
         sizes = ${sizes},
         images = ${images}
-      WHERE id = ${id}
+      WHERE id::text = ${id} OR slug = ${id}
       RETURNING *;
     `;
+
+    if (updatedProduct.length === 0) {
+      return NextResponse.json({ error: "Product not found for update" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true, product: updatedProduct[0] }, { status: 200 });
   } catch (error: any) {
