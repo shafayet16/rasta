@@ -1,0 +1,93 @@
+import { NextResponse } from "next/server";
+import { neon } from "@neondatabase/serverless";
+
+export async function GET() {
+  try {
+    const sql = neon(process.env.DATABASE_URL!);
+    const orders = await sql`
+      SELECT * FROM orders ORDER BY created_at DESC
+    `;
+    return NextResponse.json(orders);
+  } catch (err: any) {
+    console.error("Fetch orders error:", err);
+    return NextResponse.json({ error: err.message || "Failed to fetch orders." }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const sql = neon(process.env.DATABASE_URL!);
+    const body = await req.json();
+
+    const { customer, items, subtotal, shippingFee, total, paymentMethod } = body;
+
+    const fullNameValue = customer?.fullName || customer?.name || customer?.customer_name;
+    const phoneValue = customer?.phone || customer?.phoneNumber || customer?.phone_number;
+    const addressValue = customer?.address || customer?.shipping_address;
+
+    if (!fullNameValue || !phoneValue || !addressValue || !items?.length) {
+      return NextResponse.json({ error: "Missing required order information." }, { status: 400 });
+    }
+
+    const orderId = `ORD-${Date.now().toString().slice(-6)}`;
+
+    // 1. Ensure table structure exists
+    await sql`
+      CREATE TABLE IF NOT EXISTS orders (
+        id VARCHAR(50) PRIMARY KEY,
+        customer_name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        email TEXT,
+        address TEXT NOT NULL,
+        city TEXT NOT NULL,
+        items JSONB NOT NULL,
+        subtotal NUMERIC NOT NULL,
+        shipping_fee NUMERIC NOT NULL,
+        total NUMERIC NOT NULL,
+        payment_method VARCHAR(20) NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 2. Clear legacy table constraints dynamically
+    try {
+      await sql`ALTER TABLE orders ALTER COLUMN id DROP DEFAULT;`;
+      await sql`ALTER TABLE orders ALTER COLUMN id TYPE VARCHAR(50) USING id::text;`;
+      await sql`ALTER TABLE orders ALTER COLUMN customer_email DROP NOT NULL;`;
+      await sql`ALTER TABLE orders ALTER COLUMN email DROP NOT NULL;`;
+      await sql`ALTER TABLE orders ALTER COLUMN customer_phone DROP NOT NULL;`;
+      await sql`ALTER TABLE orders ALTER COLUMN phone DROP NOT NULL;`;
+      await sql`ALTER TABLE orders ALTER COLUMN shipping_address DROP NOT NULL;`;
+    } catch {
+      // Ignore if columns do not exist or are already non-restrictive
+    }
+
+    const customerEmail = customer?.email?.trim() || "N/A";
+
+    await sql`
+      INSERT INTO orders (
+        id, customer_name, phone, email, address, city, 
+        items, subtotal, shipping_fee, total, payment_method
+      )
+      VALUES (
+        ${orderId},
+        ${fullNameValue},
+        ${phoneValue},
+        ${customerEmail},
+        ${addressValue},
+        ${customer.city || "N/A"},
+        ${JSON.stringify(items)},
+        ${Number(subtotal) || 0},
+        ${Number(shippingFee) || 0},
+        ${Number(total) || 0},
+        ${paymentMethod || "COD"}
+      )
+    `;
+
+    return NextResponse.json({ success: true, orderId });
+  } catch (err: any) {
+    console.error("Order error:", err);
+    return NextResponse.json({ error: err.message || "Failed to place order." }, { status: 500 });
+  }
+}
