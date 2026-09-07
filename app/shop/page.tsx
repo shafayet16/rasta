@@ -31,7 +31,6 @@ export default function ShopPage() {
 
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // Fetch products from Neon DB API
   useEffect(() => {
     async function fetchProducts() {
       try {
@@ -51,7 +50,6 @@ export default function ShopPage() {
     fetchProducts();
   }, []);
 
-  // Filter and Sort Logic
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
@@ -70,7 +68,6 @@ export default function ShopPage() {
     return result;
   }, [products, availability, sortBy]);
 
-  // Entrance transition for filtered products
   useEffect(() => {
     if (gridRef.current && gridRef.current.children.length > 0) {
       gsap.fromTo(
@@ -247,16 +244,16 @@ export default function ShopPage() {
               return (
                 <article key={product.id} className="group flex flex-col text-left">
                   <Link href={`/product/${product.slug || product.id}`}>
-                    <div className="relative aspect-[3/4] w-full overflow-hidden mix-blend-multiply bg-black/5">
+                    <div className="relative aspect-square w-full overflow-hidden bg-white">
                       <Image
                         src={mainImage}
                         alt={product.name}
                         fill
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                        className="object-cover object-center transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-[1.05]"
+                        className="object-contain object-center transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-[1.05]"
                       />
                       {!isAvailable && (
-                        <span className="absolute top-2 left-2 bg-black px-2 py-1 text-[9px] font-medium tracking-widest text-white uppercase">
+                        <span className="absolute top-2 left-2 bg-black px-2 py-1 text-[9px] font-medium tracking-widest text-white uppercase z-10">
                           Sold Out
                         </span>
                       )}

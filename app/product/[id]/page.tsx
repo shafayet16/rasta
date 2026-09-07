@@ -28,12 +28,13 @@ export default function ProductDetailPage({
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Gallery state
+  // Gallery & Interaction state
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [isFading, setIsFading] = useState(false);
 
   // Accordion state
-  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+  const [openAccordion, setOpenAccordion] = useState<string | null>("description");
 
   // Pair It With state
   const [pairProduct, setPairProduct] = useState<Product | null>(null);
@@ -43,7 +44,6 @@ export default function ProductDetailPage({
       try {
         setLoading(true);
 
-        // Fetch product details
         const res = await fetch(`/api/products/${productId}`);
         if (!res.ok) throw new Error("Product not found");
         const data: Product = await res.json();
@@ -53,7 +53,6 @@ export default function ProductDetailPage({
           setSelectedSize(data.sizes[0]);
         }
 
-        // Fetch all products for recommendations & 'Pair It With'
         const allRes = await fetch("/api/products");
         if (allRes.ok) {
           const allData: Product[] = await allRes.json();
@@ -73,10 +72,33 @@ export default function ProductDetailPage({
     fetchData();
   }, [productId]);
 
+  const changeImage = (newIndex: number) => {
+    if (newIndex === currentImgIndex || isFading) return;
+    setIsFading(true);
+    setTimeout(() => {
+      setCurrentImgIndex(newIndex);
+      setIsFading(false);
+    }, 150);
+  };
+
+  const handlePrevImage = () => {
+    const nextIdx = currentImgIndex === 0 ? images.length - 1 : currentImgIndex - 1;
+    changeImage(nextIdx);
+  };
+
+  const handleNextImage = () => {
+    const nextIdx = currentImgIndex === images.length - 1 ? 0 : currentImgIndex + 1;
+    changeImage(nextIdx);
+  };
+
+  const toggleAccordion = (key: string) => {
+    setOpenAccordion(openAccordion === key ? null : key);
+  };
+
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white text-[10px] font-medium tracking-[0.25em] uppercase text-black/40">
-        LOADING PRODUCT...
+      <div className="flex min-h-screen items-center justify-center bg-white text-[10px] font-medium tracking-[0.3em] uppercase text-black/40">
+        <span className="animate-pulse">LOADING PRODUCT...</span>
       </div>
     );
   }
@@ -84,12 +106,12 @@ export default function ProductDetailPage({
   if (!product) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-white text-black">
-        <p className="text-[11px] tracking-[0.2em] uppercase text-black/60">
+        <p className="text-[11px] tracking-[0.25em] uppercase text-black/60">
           PRODUCT NOT FOUND
         </p>
         <Link
           href="/shop"
-          className="mt-4 border border-black px-6 py-2 text-[10px] tracking-widest uppercase hover:bg-black hover:text-white transition-colors"
+          className="mt-6 border border-black/80 px-8 py-3 text-[10px] tracking-[0.25em] uppercase transition-all duration-300 hover:bg-black hover:text-white"
         >
           BACK TO SHOP
         </Link>
@@ -101,85 +123,122 @@ export default function ProductDetailPage({
   const formattedPrice =
     product.price_formatted || `৳ ${Number(product.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
-  const toggleAccordion = (key: string) => {
-    setOpenAccordion(openAccordion === key ? null : key);
-  };
-
-  const handlePrevImage = () => {
-    setCurrentImgIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  };
-
-  const handleNextImage = () => {
-    setCurrentImgIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-  };
-
   return (
     <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white">
-      {/* MAIN PRODUCT DISPLAY */}
-      <main className="mx-auto max-w-[1600px] px-6 pt-24 pb-16 sm:px-12">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
+      {/* MAIN DISPLAY */}
+      <main className="mx-auto max-w-[1600px] px-6 pt-28 pb-24 sm:px-12">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
           
-          {/* LEFT CAROUSEL SECTION (7 COLS) */}
-          <div className="relative flex flex-col items-center lg:col-span-7">
-            <div className="relative aspect-[4/5] w-full max-w-[650px] overflow-hidden bg-white">
-              <Image
-                src={images[currentImgIndex]}
-                alt={product.name}
-                fill
-                priority
-                className="object-contain object-center transition-all duration-300"
-              />
+          {/* LEFT: GALLERY & CAROUSEL (7 COLS) */}
+          <div className="flex flex-col items-center lg:col-span-7">
+            <div className="group relative aspect-[4/5] w-full max-w-[650px] overflow-hidden bg-neutral-50/50">
+              
+              {/* IMAGE DISPLAY WITH SMOOTH TRANSITION */}
+              <div
+                className={`relative h-full w-full transition-opacity duration-300 ease-in-out ${
+                  isFading ? "opacity-0" : "opacity-100"
+                }`}
+              >
+                <Image
+                  src={images[currentImgIndex]}
+                  alt={product.name}
+                  fill
+                  priority
+                  className="object-contain object-center p-4 transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                />
+              </div>
 
-              {/* CLEAN NAVIGATION ARROWS */}
+              {/* GALLERY COUNTER */}
+              {images.length > 1 && (
+                <div className="absolute top-6 right-6 text-[9px] font-medium tracking-[0.3em] text-black/40">
+                  {String(currentImgIndex + 1).padStart(2, "0")} / {String(images.length).padStart(2, "0")}
+                </div>
+              )}
+
+              {/* CUSTOM SLEEK NAVIGATION ARROWS */}
               {images.length > 1 && (
                 <>
                   <button
                     onClick={handlePrevImage}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 p-4 text-[18px] text-black/40 hover:text-black transition-colors"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/80 backdrop-blur-md opacity-0 group-hover:opacity-100 hover:border-black hover:bg-black hover:text-white transition-all duration-300"
                     aria-label="Previous image"
                   >
-                    ←
+                    <svg className="h-4 w-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
                   </button>
                   <button
                     onClick={handleNextImage}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 p-4 text-[18px] text-black/40 hover:text-black transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/80 backdrop-blur-md opacity-0 group-hover:opacity-100 hover:border-black hover:bg-black hover:text-white transition-all duration-300"
                     aria-label="Next image"
                   >
-                    →
+                    <svg className="h-4 w-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
                   </button>
                 </>
               )}
             </div>
+
+            {/* THUMBNAIL PREVIEW STRIP */}
+{images.length > 1 && (
+  <div className="mt-8 flex justify-center gap-4 overflow-x-auto p-2">
+    {images.map((img, idx) => {
+      const isActive = currentImgIndex === idx;
+      return (
+        <button
+          key={idx}
+          onClick={() => changeImage(idx)}
+          className={`group relative aspect-square h-20 w-20 shrink-0 bg-neutral-50 transition-all duration-200 ${
+            isActive
+              ? "border-2 border-black opacity-100"
+              : "border border-black/15 opacity-40 hover:opacity-100"
+          }`}
+        >
+          {/* INNER CONTAINER FOR IMAGE TO PREVENT OVERFLOW CLIPPING */}
+          <div className="relative h-full w-full p-2">
+            <Image
+              src={img}
+              alt={`Thumbnail ${idx + 1}`}
+              fill
+              className="object-contain"
+            />
+          </div>
+        </button>
+      );
+    })}
+  </div>
+)}
           </div>
 
-          {/* RIGHT DETAILS SECTION (5 COLS) */}
-          <div className="flex flex-col max-w-md lg:col-span-5">
-            <h1 className="text-[12px] font-medium tracking-[0.2em] uppercase">
+          {/* RIGHT: PRODUCT DETAILS (5 COLS) */}
+          <div className="flex flex-col max-w-md lg:col-span-5 lg:pt-4">
+            <h1 className="text-[13px] font-medium tracking-[0.25em] uppercase text-black">
               {product.name}
             </h1>
-            <p className="mt-2 text-[12px] text-black/70">
+            <p className="mt-3 text-[12px] font-medium tracking-wider text-black/70">
               {formattedPrice}
             </p>
 
             {/* SIZE SELECTOR */}
             {product.sizes && product.sizes.length > 0 && (
-              <div className="mt-10">
-                <div className="flex items-center justify-between text-[10px] font-medium tracking-widest uppercase">
-                  <span>SIZE</span>
-                  <button className="text-black/50 underline underline-offset-4 hover:text-black">
+              <div className="mt-10 border-t border-black/10 pt-8">
+                <div className="flex items-center justify-between text-[10px] font-medium tracking-[0.2em] uppercase">
+                  <span>SELECT SIZE</span>
+                  <button className="text-black/50 underline underline-offset-4 hover:text-black transition-colors">
                     SIZE GUIDE
                   </button>
                 </div>
 
-                <div className="mt-4 flex gap-6 text-[11px] font-medium tracking-wider uppercase">
+                <div className="mt-5 flex gap-4 text-[11px] font-medium tracking-wider uppercase">
                   {product.sizes.map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`relative pb-1 transition-colors ${
+                      className={`flex h-10 w-12 items-center justify-center border text-[10px] transition-all duration-300 ${
                         selectedSize === size
-                          ? "text-black after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:w-full after:bg-black"
-                          : "text-black/40 hover:text-black"
+                          ? "border-black bg-black text-white"
+                          : "border-black/20 bg-transparent text-black/60 hover:border-black hover:text-black"
                       }`}
                     >
                       {size}
@@ -189,153 +248,153 @@ export default function ProductDetailPage({
               </div>
             )}
 
-            {/* ADD TO CART BUTTON */}
+            {/* ADD TO CART ACTION */}
             <button
               type="button"
-              className="mt-8 flex w-full items-center justify-center gap-2 border border-black bg-transparent py-4 text-[10px] font-medium tracking-[0.25em] uppercase text-black hover:bg-black hover:text-white transition-colors"
+              className="group relative mt-8 flex w-full items-center justify-center gap-3 overflow-hidden border border-black bg-black py-4 text-[10px] font-medium tracking-[0.3em] uppercase text-white transition-all duration-300 hover:bg-transparent hover:text-black"
             >
-              <span>🛒 ADD TO CART</span>
+              <svg className="h-4 w-4 fill-current transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
+                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+              </svg>
+              <span>ADD TO CART</span>
             </button>
 
-            {/* ACCORDION SECTIONS */}
-            <div className="mt-10 border-t border-black/10 text-[10px] tracking-[0.2em] uppercase">
+            {/* ANIMATED ACCORDION SECTIONS */}
+            <div className="mt-12 border-t border-black/10 text-[10px] tracking-[0.2em] uppercase">
               
-              {/* DESCRIPTION ACCORDION */}
+              {/* ACCORDION ITEM: DESCRIPTION */}
               <div className="border-b border-black/10">
                 <button
                   onClick={() => toggleAccordion("description")}
-                  className="flex w-full items-center justify-between py-4 text-left font-medium"
+                  className="flex w-full items-center justify-between py-5 text-left font-medium transition-colors hover:text-black/60"
                 >
                   <span>DESCRIPTION</span>
-                  <span className="text-[12px]">{openAccordion === "description" ? "−" : "+"}</span>
+                  <span className="text-[14px] transition-transform duration-300">
+                    {openAccordion === "description" ? "−" : "+"}
+                  </span>
                 </button>
-                {openAccordion === "description" && (
-                  <div className="pb-4 text-[11px] leading-relaxed tracking-normal text-black/70 lowercase normal-case">
+                <div
+                  className={`grid transition-all duration-300 ease-in-out ${
+                    openAccordion === "description" ? "grid-rows-[1fr] opacity-100 pb-5" : "grid-rows-[0fr] opacity-0"
+                  }`}
+                >
+                  <div className="overflow-hidden text-[11px] leading-relaxed tracking-normal text-black/70 normal-case">
                     {product.description || "No description provided."}
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* SHIPPING ACCORDION */}
+              {/* ACCORDION ITEM: SHIPPING */}
               <div className="border-b border-black/10">
                 <button
                   onClick={() => toggleAccordion("shipping")}
-                  className="flex w-full items-center justify-between py-4 text-left font-medium"
+                  className="flex w-full items-center justify-between py-5 text-left font-medium transition-colors hover:text-black/60"
                 >
-                  <span>SHIPPING</span>
-                  <span className="text-[12px]">{openAccordion === "shipping" ? "−" : "+"}</span>
+                  <span>SHIPPING & DELIVERY</span>
+                  <span className="text-[14px] transition-transform duration-300">
+                    {openAccordion === "shipping" ? "−" : "+"}
+                  </span>
                 </button>
-                {openAccordion === "shipping" && (
-                  <div className="pb-4 text-[11px] leading-relaxed tracking-normal text-black/70 lowercase normal-case">
+                <div
+                  className={`grid transition-all duration-300 ease-in-out ${
+                    openAccordion === "shipping" ? "grid-rows-[1fr] opacity-100 pb-5" : "grid-rows-[0fr] opacity-0"
+                  }`}
+                >
+                  <div className="overflow-hidden text-[11px] leading-relaxed tracking-normal text-black/70 normal-case">
                     Standard delivery within 2-4 business days across Bangladesh. Cash on delivery available.
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* RETURN ACCORDION */}
+              {/* ACCORDION ITEM: RETURNS */}
               <div className="border-b border-black/10">
                 <button
                   onClick={() => toggleAccordion("return")}
-                  className="flex w-full items-center justify-between py-4 text-left font-medium"
+                  className="flex w-full items-center justify-between py-5 text-left font-medium transition-colors hover:text-black/60"
                 >
-                  <span>RETURN</span>
-                  <span className="text-[12px]">{openAccordion === "return" ? "−" : "+"}</span>
+                  <span>RETURNS & EXCHANGES</span>
+                  <span className="text-[14px] transition-transform duration-300">
+                    {openAccordion === "return" ? "−" : "+"}
+                  </span>
                 </button>
-                {openAccordion === "return" && (
-                  <div className="pb-4 text-[11px] leading-relaxed tracking-normal text-black/70 lowercase normal-case">
+                <div
+                  className={`grid transition-all duration-300 ease-in-out ${
+                    openAccordion === "return" ? "grid-rows-[1fr] opacity-100 pb-5" : "grid-rows-[0fr] opacity-0"
+                  }`}
+                >
+                  <div className="overflow-hidden text-[11px] leading-relaxed tracking-normal text-black/70 normal-case">
                     Exchanges allowed within 7 days of delivery for unworn items in original packaging.
                   </div>
-                )}
+                </div>
               </div>
 
             </div>
           </div>
         </div>
 
-        {/* THUMBNAIL PREVIEW ROW */}
-        {images.length > 1 && (
-          <div className="mt-12 flex justify-center gap-3 overflow-x-auto py-2">
-            {images.map((img, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentImgIndex(idx)}
-                className={`relative h-16 w-16 bg-white transition-all ${
-                  currentImgIndex === idx
-                    ? "border border-black p-0.5"
-                    : "border border-transparent opacity-50 hover:opacity-100"
-                }`}
-              >
-                <Image src={img} alt={`Thumbnail ${idx + 1}`} fill className="object-contain" />
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* PAIR IT WITH SECTION */}
+        {/* LOOKBOOK BUNDLE: PAIR IT WITH */}
         {pairProduct && (
-          <section className="mt-28 border-t border-black/10 pt-16">
-            <h2 className="text-[10px] font-medium tracking-[0.25em] uppercase text-black/60">
+          <section className="mt-32 border-t border-black/10 pt-20">
+            <h2 className="text-[10px] font-medium tracking-[0.3em] uppercase text-black/50">
               PAIR IT WITH
             </h2>
 
-            <div className="mt-12 flex flex-col items-center justify-between gap-12 lg:flex-row">
-              <div className="flex items-center gap-8 sm:gap-12">
-                {/* ITEM 1 */}
-                <div className="flex flex-col text-left">
-                  <div className="relative aspect-[3/4] w-48 sm:w-64 bg-white">
-                    <Image src={images[0]} alt={product.name} fill className="object-contain" />
+            <div className="mt-12 flex flex-col items-center justify-between gap-12 lg:flex-row lg:items-end">
+              <div className="flex flex-col items-center gap-6 sm:flex-row sm:gap-10">
+                {/* PRIMARY PRODUCT */}
+                <div className="flex flex-col">
+                  <div className="relative aspect-[3/4] w-44 sm:w-56 bg-neutral-50/50">
+                    <Image src={images[0]} alt={product.name} fill className="object-contain p-2" />
                   </div>
                   <div className="mt-4 flex items-center justify-between text-[10px] tracking-wider uppercase">
-                    <span>{product.name}</span>
-                    <span className="text-black/50">{selectedSize}</span>
+                    <span className="truncate max-w-[120px]">{product.name}</span>
+                    <span className="text-black/40">{selectedSize}</span>
                     <span>{formattedPrice}</span>
                   </div>
                 </div>
 
-                <span className="text-[18px] text-black/40">+</span>
+                <span className="text-[20px] font-light text-black/30">+</span>
 
-                {/* ITEM 2 */}
-                <div className="flex flex-col text-left">
-                  <div className="relative aspect-[3/4] w-48 sm:w-64 bg-white">
+                {/* PAIR PRODUCT */}
+                <div className="flex flex-col">
+                  <div className="relative aspect-[3/4] w-44 sm:w-56 bg-neutral-50/50">
                     <Image
                       src={pairProduct.images?.[0] || "/placeholder.png"}
                       alt={pairProduct.name}
                       fill
-                      className="object-contain"
+                      className="object-contain p-2"
                     />
                   </div>
                   <div className="mt-4 flex items-center justify-between text-[10px] tracking-wider uppercase">
-                    <span>{pairProduct.name}</span>
-                    <span>
-                      {pairProduct.price_formatted || `৳ ${pairProduct.price}`}
-                    </span>
+                    <span className="truncate max-w-[120px]">{pairProduct.name}</span>
+                    <span>{pairProduct.price_formatted || `৳ ${pairProduct.price}`}</span>
                   </div>
                 </div>
               </div>
 
-              {/* BUNDLE ADD TO CART */}
+              {/* BUNDLE TOTAL & ACTION */}
               <div className="flex flex-col items-center lg:items-end">
-                <div className="text-[11px] font-medium tracking-widest uppercase">
-                  TOTAL:{" "}
-                  <span className="text-black">
+                <div className="text-[11px] font-medium tracking-[0.25em] uppercase">
+                  BUNDLE TOTAL:{" "}
+                  <span className="text-black font-semibold">
                     ৳ {(Number(product.price) + Number(pairProduct.price)).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <button
                   type="button"
-                  className="mt-4 border border-black bg-transparent px-8 py-3 text-[10px] font-medium tracking-[0.25em] uppercase text-black hover:bg-black hover:text-white transition-colors"
+                  className="mt-5 border border-black bg-transparent px-10 py-3.5 text-[10px] font-medium tracking-[0.3em] uppercase text-black hover:bg-black hover:text-white transition-all duration-300"
                 >
-                  ADD TO CART
+                  ADD LOOK TO CART
                 </button>
               </div>
             </div>
           </section>
         )}
 
-        {/* YOU MAY ALSO LIKE SECTION */}
+        {/* YOU MAY ALSO LIKE GRID */}
         {recommendations.length > 0 && (
-          <section className="mt-28 border-t border-black/10 pt-16">
-            <h2 className="text-[10px] font-medium tracking-[0.25em] uppercase text-black/60">
+          <section className="mt-32 border-t border-black/10 pt-20">
+            <h2 className="text-[10px] font-medium tracking-[0.3em] uppercase text-black/50">
               YOU MAY ALSO LIKE
             </h2>
 
@@ -346,27 +405,27 @@ export default function ProductDetailPage({
                   rec.price_formatted || `৳ ${Number(rec.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
                 return (
-                  <article key={rec.id} className="group flex flex-col text-left">
+                  <article key={rec.id} className="group flex flex-col">
                     <Link href={`/product/${rec.slug || rec.id}`}>
-                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-white">
+                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-50/50">
                         <Image
                           src={recImg}
                           alt={rec.name}
                           fill
                           sizes="(max-width: 640px) 50vw, 25vw"
-                          className="object-contain transition-transform duration-700 ease-out group-hover:scale-105"
+                          className="object-contain p-2 transition-transform duration-700 ease-out group-hover:scale-105"
                         />
                       </div>
                     </Link>
 
                     <div className="mt-4 flex items-start justify-between text-[10px] font-medium tracking-wider uppercase">
                       <h2>
-                        <Link href={`/product/${rec.slug || rec.id}`} className="hover:opacity-60 transition-opacity">
+                        <Link href={`/product/${rec.slug || rec.id}`} className="hover:opacity-50 transition-opacity">
                           + {rec.name}
                         </Link>
                       </h2>
                     </div>
-                    <p className="mt-1 text-[10px] text-black/60">{recPrice}</p>
+                    <p className="mt-1 text-[10px] text-black/50">{recPrice}</p>
                   </article>
                 );
               })}
@@ -375,25 +434,25 @@ export default function ProductDetailPage({
         )}
       </main>
 
-      {/* FLOATING STICKY ADD TO CART BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between border-t border-black/10 bg-white/95 px-6 py-3 backdrop-blur-md sm:px-12">
+      {/* FLOATING STICKY BOTTOM BAR */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between border-t border-black/10 bg-white/90 px-6 py-3.5 backdrop-blur-md sm:px-12 transition-all">
         <div className="flex items-center gap-4">
-          <div className="relative h-10 w-10 overflow-hidden bg-white">
-            <Image src={images[0]} alt={product.name} fill className="object-contain" />
+          <div className="relative h-10 w-10 overflow-hidden bg-neutral-50 border border-black/10">
+            <Image src={images[0]} alt={product.name} fill className="object-contain p-1" />
           </div>
           <div>
             <p className="text-[10px] font-medium tracking-widest uppercase">{product.name}</p>
-            <p className="text-[9px] text-black/50">{selectedSize}</p>
+            <p className="text-[9px] text-black/40 uppercase">{selectedSize}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-6">
-          <span className="hidden text-[10px] font-medium sm:inline">{formattedPrice}</span>
+          <span className="hidden text-[10px] font-medium tracking-wider sm:inline">{formattedPrice}</span>
           <button
             type="button"
-            className="flex items-center gap-2 bg-black px-6 py-2.5 text-[10px] font-medium tracking-[0.2em] uppercase text-white hover:bg-black/80 transition-colors"
+            className="flex items-center gap-2 bg-black px-6 py-2.5 text-[10px] font-medium tracking-[0.25em] uppercase text-white hover:bg-black/80 transition-colors"
           >
-            <span>🛒 ADD TO CART</span>
+            <span>ADD TO CART</span>
           </button>
         </div>
       </div>
