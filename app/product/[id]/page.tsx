@@ -123,6 +123,14 @@ export default function ProductDetailPage({
   const formattedPrice =
     product.price_formatted || `৳ ${Number(product.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
+  // Parse multi-line descriptions into individual one-liner items
+  const descriptionBullets = product.description
+    ? product.description
+        .split("\n")
+        .map((line) => line.replace(/^[•\-\*]\s*/, "").trim())
+        .filter((line) => line.length > 0)
+    : [];
+
   return (
     <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white">
       {/* MAIN DISPLAY */}
@@ -181,34 +189,33 @@ export default function ProductDetailPage({
             </div>
 
             {/* THUMBNAIL PREVIEW STRIP */}
-{images.length > 1 && (
-  <div className="mt-8 flex justify-center gap-4 overflow-x-auto p-2">
-    {images.map((img, idx) => {
-      const isActive = currentImgIndex === idx;
-      return (
-        <button
-          key={idx}
-          onClick={() => changeImage(idx)}
-          className={`group relative aspect-square h-20 w-20 shrink-0 bg-neutral-50 transition-all duration-200 ${
-            isActive
-              ? "border-2 border-black opacity-100"
-              : "border border-black/15 opacity-40 hover:opacity-100"
-          }`}
-        >
-          {/* INNER CONTAINER FOR IMAGE TO PREVENT OVERFLOW CLIPPING */}
-          <div className="relative h-full w-full p-2">
-            <Image
-              src={img}
-              alt={`Thumbnail ${idx + 1}`}
-              fill
-              className="object-contain"
-            />
-          </div>
-        </button>
-      );
-    })}
-  </div>
-)}
+            {images.length > 1 && (
+              <div className="mt-8 flex justify-center gap-4 overflow-x-auto p-2">
+                {images.map((img, idx) => {
+                  const isActive = currentImgIndex === idx;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => changeImage(idx)}
+                      className={`group relative aspect-square h-20 w-20 shrink-0 bg-neutral-50 transition-all duration-200 ${
+                        isActive
+                          ? "border-2 border-black opacity-100"
+                          : "border border-black/15 opacity-40 hover:opacity-100"
+                      }`}
+                    >
+                      <div className="relative h-full w-full p-2">
+                        <Image
+                          src={img}
+                          alt={`Thumbnail ${idx + 1}`}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* RIGHT: PRODUCT DETAILS (5 COLS) */}
@@ -278,8 +285,19 @@ export default function ProductDetailPage({
                     openAccordion === "description" ? "grid-rows-[1fr] opacity-100 pb-5" : "grid-rows-[0fr] opacity-0"
                   }`}
                 >
-                  <div className="overflow-hidden text-[11px] leading-relaxed tracking-normal text-black/70 normal-case">
-                    {product.description || "No description provided."}
+                  <div className="overflow-hidden text-[11px] leading-relaxed tracking-normal text-black/80 normal-case">
+                    {descriptionBullets.length > 0 ? (
+                      <ul className="flex flex-col gap-2.5">
+                        {descriptionBullets.map((bullet, idx) => (
+                          <li key={idx} className="flex items-start gap-3">
+                            <span className="text-black/30 font-mono select-none">—</span>
+                            <span>{bullet}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-black/40 italic">No description provided.</p>
+                    )}
                   </div>
                 </div>
               </div>

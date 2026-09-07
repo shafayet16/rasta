@@ -13,7 +13,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [description, setDescription] = useState("");
+  const [descriptionLines, setDescriptionLines] = useState<string[]>([""]);
   const [inStock, setInStock] = useState(true);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
@@ -35,10 +35,19 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
         setName(data.name || "");
         setPrice(data.price ? String(data.price) : "");
-        setDescription(data.description || "");
         setInStock(data.in_stock ?? true);
         setSelectedSizes(data.sizes || ["S", "M", "L", "XL"]);
         setExistingImages(data.images || []);
+
+        // Parse description into dynamic one-liner array
+        if (data.description) {
+          const lines = data.description
+            .split("\n")
+            .map((line: string) => line.replace(/^[•\-\*]\s*/, "").trim());
+          setDescriptionLines(lines.length > 0 ? lines : [""]);
+        } else {
+          setDescriptionLines([""]);
+        }
       } catch (err: any) {
         console.error("Fetch product error:", err);
         alert(err.message || "Product not found");
@@ -57,11 +66,43 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  /* ONE-LINER DESCRIPTION HANDLERS */
+  function handleDescriptionLineChange(index: number, value: string) {
+    const updated = [...descriptionLines];
+    updated[index] = value;
+    setDescriptionLines(updated);
+  }
+
+  function addDescriptionLine() {
+    setDescriptionLines([...descriptionLines, ""]);
+  }
+
+  function removeDescriptionLine(index: number) {
+    if (descriptionLines.length === 1) {
+      setDescriptionLines([""]);
+      return;
+    }
+    setDescriptionLines(descriptionLines.filter((_, idx) => idx !== index));
+  }
+
+  function handleLineKeyDown(e: React.KeyboardEvent<HTMLInputElement>, index: number) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const updated = [...descriptionLines];
+      updated.splice(index + 1, 0, "");
+      setDescriptionLines(updated);
+
+      setTimeout(() => {
+        const nextInput = document.getElementById(`desc-line-${index + 1}`);
+        nextInput?.focus();
+      }, 50);
+    }
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files || e.target.files.length === 0) return;
     
     const selectedFiles = Array.from(e.target.files);
-    
     setNewFiles((prev) => [...prev, ...selectedFiles]);
 
     const newPreviewUrls = selectedFiles.map((file) => URL.createObjectURL(file));
@@ -76,7 +117,6 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   function removeNewFile(indexToRemove: number) {
     URL.revokeObjectURL(previews[indexToRemove]);
-
     setNewFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
     setPreviews((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   }
@@ -118,13 +158,19 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         return;
       }
 
+      // Format description into clean one-liner bullet format
+      const formattedDescription = descriptionLines
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .join("\n");
+
       const res = await fetch(`/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
           price,
-          description,
+          description: formattedDescription,
           inStock,
           sizes: selectedSizes,
           images: finalImages,
@@ -208,14 +254,63 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
+          {/* DYNAMIC ONE-LINER DESCRIPTION LIST */}
           <div>
-            <label className="mb-2 block text-black/60">Description</label>
-            <textarea
-              rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full border border-black/20 p-3 text-black focus:border-black focus:outline-none"
-            />
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-black/60">Description (One-Liners)</label>
+              <span className="text-[9px] text-black/40">Press Enter for new line</span>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              {descriptionLines.map((line, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-[12px] text-black/40 font-mono">•</span>
+                  <input
+                    id={`desc-line-${idx}`}
+                    type="text"
+                    value={line}
+                    placeholder="e.g. 100% HEAVYWEIGHT COTTON"
+                    onChange={(e) => handleDescriptionLineChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleLineKeyDown(e, idx)}
+                    className="w-full border border-black/20 p-2.5 text-black focus:border-black focus:outline-none normal-case placeholder:uppercase placeholder:text-black/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeDescriptionLine(idx)}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center border border-black/20 text-black/40 hover:border-black hover:text-black transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={addDescriptionLine}
+              className="mt-3 flex items-center gap-1.5 text-[10px] tracking-widest text-black/60 hover:text-black transition-colors"
+            >
+              <span>+ ADD LINE</span>
+            </button>
+
+            {/* LIVE PREVIEW */}
+            {descriptionLines.some((l) => l.trim() !== "") && (
+              <div className="mt-4 border border-black/10 bg-neutral-50 p-3">
+                <span className="block text-[9px] font-semibold text-black/40 tracking-widest mb-2 uppercase">
+                  Product Page Preview
+                </span>
+                <ul className="flex flex-col gap-1.5 text-[11px] leading-relaxed text-black/80 normal-case">
+                  {descriptionLines
+                    .filter((l) => l.trim() !== "")
+                    .map((l, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-black/40">—</span>
+                        <span>{l}</span>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* CURRENT IMAGES */}
