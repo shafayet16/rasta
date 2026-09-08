@@ -26,98 +26,129 @@ function SuccessContent() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white text-neutral-900 font-sans px-6 py-10 space-y-12 animate-fade-in">
-      {/* Header Section */}
+    <div className="w-full max-w-[540px] mx-auto bg-white border border-black/10 p-8 sm:p-12 space-y-10 selection:bg-black selection:text-white">
+      
+      {/* HEADER SECTION */}
       <div className="text-center space-y-4">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-neutral-50 border border-neutral-200/80 text-neutral-900 mb-2 shadow-sm transition-transform duration-500 hover:scale-105">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full border border-black/10 text-black mb-2">
           <svg 
-            className="w-5 h-5 text-neutral-800" 
+            className="w-4 h-4 text-black" 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
-            strokeWidth="2"
+            strokeWidth="1.5"
           >
             <path 
               strokeLinecap="round" 
               strokeLinejoin="round" 
-              d="M5 13l4 4L19 7" 
-              className="animate-draw"
+              d="M4.5 12.75l6 6 9-13.5" 
             />
           </svg>
         </div>
-        <h1 className="text-xl font-semibold tracking-[0.2em] text-neutral-900 uppercase">
-          Order Confirmed
-        </h1>
-        <p className="text-[13px] text-neutral-400 font-light max-w-xs mx-auto leading-relaxed">
-          Your order has been placed successfully and is now being processed.
+        
+        <div>
+          <span className="text-[9px] font-medium tracking-[0.3em] uppercase text-black/40 block mb-1">
+            CONFIRMATION
+          </span>
+          <h1 className="text-lg sm:text-xl font-medium tracking-[0.2em] text-black uppercase">
+            ORDER PLACED
+          </h1>
+        </div>
+
+        <p className="text-[11px] text-black/60 font-normal max-w-xs mx-auto leading-relaxed tracking-wide">
+          Thank you for your purchase. Your order has been recorded and is currently being processed.
         </p>
       </div>
 
-      {/* Order Details Card */}
-      <div className="border border-neutral-200/60 rounded-xl bg-neutral-50/30 p-6 space-y-5 backdrop-blur-[2px]">
-        <div className="flex items-center justify-between pb-4 border-b border-neutral-100/80">
+      {/* ORDER DETAILS PANEL */}
+      <div className="border border-black/10 p-6 space-y-6 bg-white">
+        
+        {/* ORDER REFERENCE & COPY */}
+        <div className="flex items-center justify-between pb-5 border-b border-black/10">
           <div>
-            <span className="text-[10px] uppercase tracking-[0.15em] text-neutral-400 font-mono block mb-1">
-              Order Reference
+            <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.25em] text-black/40 font-medium block mb-1">
+              ORDER REFERENCE
             </span>
-            <span className="font-mono text-sm font-medium tracking-wide text-neutral-900">
+            <span className="text-[12px] font-medium tracking-wider text-black">
               {orderId}
             </span>
           </div>
+
           <button
+            type="button"
             onClick={handleCopy}
-            className={`text-[11px] font-mono uppercase tracking-wider px-3.5 py-1.5 border rounded-lg transition-all duration-200 ${
+            className={`text-[9px] font-medium tracking-[0.2em] uppercase px-4 py-2 border transition-all duration-300 ${
               copied 
-                ? "bg-neutral-900 border-neutral-900 text-white" 
-                : "border-neutral-200/80 hover:border-neutral-900 hover:bg-neutral-50 text-neutral-500 hover:text-neutral-900"
+                ? "bg-black border-black text-white" 
+                : "border-black/20 hover:border-black text-black/60 hover:text-black"
             }`}
           >
-            {copied ? "Copied" : "Copy"}
+            {copied ? "COPIED" : "COPY"}
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 text-xs font-mono pt-1">
+        {/* STATUS & DELIVERY META */}
+        <div className="grid grid-cols-2 gap-4 text-[10px] tracking-wide pt-1">
           <div>
-            <span className="text-neutral-400 uppercase text-[10px] tracking-wider block mb-1">Status</span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-neutral-800 font-medium">Processing</span>
+            <span className="text-black/40 uppercase text-[8px] tracking-[0.2em] block mb-1.5 font-medium">
+              STATUS
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+              <span className="text-black font-medium tracking-widest uppercase text-[9px]">
+                PROCESSING
+              </span>
             </div>
           </div>
+
           <div>
-            <span className="text-neutral-400 uppercase text-[10px] tracking-wider block mb-1">Estimated Delivery</span>
-            <span className="text-neutral-800 font-medium">2–4 Business Days</span>
+            <span className="text-black/40 uppercase text-[8px] tracking-[0.2em] block mb-1.5 font-medium">
+              ESTIMATED DELIVERY
+            </span>
+            <span className="text-black font-medium tracking-wider text-[10px]">
+              2–4 BUSINESS DAYS
+            </span>
           </div>
         </div>
+
       </div>
 
-      {/* Info Notice */}
-      <div className="relative border-l border-neutral-900 pl-4 py-0.5 text-xs text-neutral-500 space-y-1">
-        <p className="font-mono text-[10px] uppercase text-neutral-900 tracking-widest font-semibold">Note</p>
-        <p className="leading-relaxed font-light">
-          Our customer service team will reach out via mobile to confirm your final delivery details prior to dispatching your items.
+      {/* VERIFICATION NOTICE */}
+      <div className="border-l border-black pl-4 py-0.5 space-y-1">
+        <p className="text-[9px] uppercase text-black tracking-[0.25em] font-medium">
+          VERIFICATION NOTE
+        </p>
+        <p className="text-[11px] leading-relaxed text-black/60 font-normal">
+          Our team will reach out via mobile to verify your delivery location before dispatching your package.
         </p>
       </div>
 
-      {/* Action CTA */}
+      {/* ACTION CTA */}
       <div className="pt-2">
         <Link
-          href="/"
-          className="w-full inline-block text-center bg-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 text-white text-xs uppercase tracking-[0.2em] py-4 rounded-xl transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+          href="/shop"
+          className="w-full inline-block text-center border border-black bg-black hover:bg-transparent text-white hover:text-black text-[10px] font-medium uppercase tracking-[0.3em] py-4 transition-all duration-300"
         >
-          Continue Shopping
+          CONTINUE SHOPPING
         </Link>
       </div>
+
     </div>
   );
 }
 
 export default function CheckoutSuccessPage() {
   return (
-    <div className="min-h-screen bg-neutral-50/50 text-neutral-900 flex items-center justify-center p-6 selection:bg-neutral-900 selection:text-white">
-      <Suspense fallback={<div className="font-mono text-xs text-neutral-400 uppercase tracking-widest animate-pulse">Loading order confirmation...</div>}>
+    <main className="min-h-screen bg-white text-black flex items-center justify-center p-6 sm:p-12 pt-28 pb-20">
+      <Suspense 
+        fallback={
+          <div className="text-[10px] font-medium text-black/40 uppercase tracking-[0.3em] animate-pulse">
+            LOADING CONFIRMATION...
+          </div>
+        }
+      >
         <SuccessContent />
       </Suspense>
-    </div>
+    </main>
   );
 }

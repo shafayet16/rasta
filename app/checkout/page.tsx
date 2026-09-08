@@ -11,7 +11,6 @@ export default function CheckoutPage() {
   const { cart, cartTotal, clearCart } = useCart();
 
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"cod" | "online">("cod");
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -25,7 +24,9 @@ export default function CheckoutPage() {
   const shippingFee = formData.city.toLowerCase() === "dhaka" ? 80 : 130;
   const grandTotal = cartTotal + shippingFee;
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
+  function handleInputChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   }
 
@@ -45,7 +46,7 @@ export default function CheckoutPage() {
           subtotal: cartTotal,
           shippingFee,
           total: grandTotal,
-          paymentMethod,
+          paymentMethod: "cod",
         }),
       });
 
@@ -78,33 +79,35 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      <main className="mx-auto max-w-6xl px-6 pt-20 pb-24 sm:px-12">
-        <h1 className="border-b border-black/10 pb-6 text-[12px] font-medium tracking-[0.25em] uppercase">
+    <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white pt-24 sm:pt-32 pb-32 sm:pb-24 px-4 sm:px-8 lg:px-16">
+      <main className="mx-auto max-w-[1400px]">
+        <h1 className="border-b border-black/10 pb-5 text-[10px] sm:text-[11px] font-medium tracking-[0.25em] uppercase text-black">
           CHECKOUT
         </h1>
 
-        <form onSubmit={handleOrderSubmit} className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-12">
-          {/* LEFT: SHIPPING & PAYMENT DETAILS */}
-          <div className="flex flex-col gap-8 text-[11px] tracking-wider uppercase lg:col-span-7">
+        <form onSubmit={handleOrderSubmit} className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16 items-start">
+          {/* LEFT: SHIPPING & PAYMENT DETAILS (7 COLS) */}
+          <div className="flex flex-col gap-10 text-[10px] tracking-wider uppercase lg:col-span-7">
             <div>
-              <h2 className="mb-4 text-[11px] font-medium tracking-[0.2em]">1. SHIPPING DETAILS</h2>
-              <div className="grid grid-cols-1 gap-4">
+              <h2 className="mb-6 text-[10px] font-medium tracking-[0.25em] text-black border-b border-black/10 pb-3">
+                1. SHIPPING DETAILS
+              </h2>
+              <div className="grid grid-cols-1 gap-5">
                 <div>
-                  <label className="mb-1 block text-black/50">FULL NAME *</label>
+                  <label className="mb-2 block text-black/50 text-[9px] tracking-[0.2em]">FULL NAME *</label>
                   <input
                     type="text"
                     name="fullName"
                     required
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className="w-full border border-black/20 p-3 text-black focus:border-black focus:outline-none normal-case"
+                    className="w-full border border-black/20 p-3.5 text-[11px] text-black focus:border-black focus:outline-none normal-case transition-colors"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-black/50">PHONE NUMBER *</label>
+                    <label className="mb-2 block text-black/50 text-[9px] tracking-[0.2em]">PHONE NUMBER *</label>
                     <input
                       type="tel"
                       name="phone"
@@ -112,28 +115,28 @@ export default function CheckoutPage() {
                       placeholder="01XXXXXXXXX"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full border border-black/20 p-3 text-black focus:border-black focus:outline-none normal-case"
+                      className="w-full border border-black/20 p-3.5 text-[11px] text-black focus:border-black focus:outline-none normal-case transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-black/50">EMAIL ADDRESS</label>
+                    <label className="mb-2 block text-black/50 text-[9px] tracking-[0.2em]">EMAIL ADDRESS</label>
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full border border-black/20 p-3 text-black focus:border-black focus:outline-none normal-case"
+                      className="w-full border border-black/20 p-3.5 text-[11px] text-black focus:border-black focus:outline-none normal-case transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-black/50">DELIVERY CITY *</label>
+                  <label className="mb-2 block text-black/50 text-[9px] tracking-[0.2em]">DELIVERY CITY *</label>
                   <select
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
-                    className="w-full border border-black/20 p-3 text-black focus:border-black focus:outline-none uppercase"
+                    className="w-full border border-black/20 p-3.5 text-[10px] text-black focus:border-black focus:outline-none uppercase transition-colors"
                   >
                     <option value="Dhaka">INSIDE DHAKA (৳ 80)</option>
                     <option value="Outside Dhaka">OUTSIDE DHAKA (৳ 130)</option>
@@ -141,7 +144,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-black/50">FULL STREET ADDRESS *</label>
+                  <label className="mb-2 block text-black/50 text-[9px] tracking-[0.2em]">FULL STREET ADDRESS *</label>
                   <textarea
                     name="address"
                     rows={3}
@@ -149,70 +152,52 @@ export default function CheckoutPage() {
                     placeholder="House/Apartment no, Road, Area"
                     value={formData.address}
                     onChange={handleInputChange}
-                    className="w-full border border-black/20 p-3 text-black focus:border-black focus:outline-none normal-case"
+                    className="w-full border border-black/20 p-3.5 text-[11px] text-black focus:border-black focus:outline-none normal-case transition-colors"
                   />
                 </div>
               </div>
             </div>
 
             {/* PAYMENT METHOD */}
-            <div className="border-t border-black/10 pt-8">
-              <h2 className="mb-4 text-[11px] font-medium tracking-[0.2em]">2. PAYMENT METHOD</h2>
-              <div className="flex flex-col gap-3">
-                <label
-                  onClick={() => setPaymentMethod("cod")}
-                  className={`flex cursor-pointer items-center justify-between border p-4 transition-all ${
-                    paymentMethod === "cod" ? "border-black bg-black/5" : "border-black/20"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <input type="radio" checked={paymentMethod === "cod"} readOnly className="h-4 w-4" />
-                    <span className="font-medium">CASH ON DELIVERY (COD)</span>
-                  </div>
-                  <span className="text-[9px] text-black/50">PAY UPON RECEIVING</span>
-                </label>
-
-                <label
-                  onClick={() => setPaymentMethod("online")}
-                  className={`flex cursor-pointer items-center justify-between border p-4 transition-all ${
-                    paymentMethod === "online" ? "border-black bg-black/5" : "border-black/20"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <input type="radio" checked={paymentMethod === "online"} readOnly className="h-4 w-4" />
-                    <span className="font-medium">BKASH / NAGAD / CARDS</span>
-                  </div>
-                  <span className="text-[9px] text-black/50">SSLCOMMERZ GATEWAY</span>
-                </label>
+            <div className="pt-2">
+              <h2 className="mb-6 text-[10px] font-medium tracking-[0.25em] text-black border-b border-black/10 pb-3">
+                2. PAYMENT METHOD
+              </h2>
+              <div className="border border-black p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="h-2 w-2 rounded-full bg-black" />
+                  <span className="font-medium text-[10px] tracking-[0.2em]">CASH ON DELIVERY (COD)</span>
+                </div>
+                <span className="text-[9px] text-black/40 tracking-[0.15em]">PAY UPON RECEIVING</span>
               </div>
             </div>
           </div>
 
-          {/* RIGHT: ORDER SUMMARY */}
-          <div className="lg:col-span-5">
-            <div className="border border-black/10 bg-neutral-50/50 p-6">
-              <h2 className="border-b border-black/10 pb-4 text-[11px] font-medium tracking-[0.2em] uppercase">
+          {/* RIGHT: ORDER SUMMARY (5 COLS, STICKY) */}
+          <div className="lg:col-span-5 lg:sticky lg:top-32">
+            <div className="border border-black/10 p-6 sm:p-8 bg-white">
+              <h2 className="border-b border-black/10 pb-4 text-[10px] font-medium tracking-[0.25em] uppercase text-black">
                 ORDER SUMMARY
               </h2>
 
-              <div className="mt-6 flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-2">
+              <div className="mt-6 flex flex-col gap-4 max-h-[280px] overflow-y-auto pr-2 divide-y divide-black/5">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center text-[10px] tracking-wider uppercase">
-                    <div className="flex items-center gap-3">
-                      <div className="relative h-12 w-10 shrink-0 bg-white border border-black/10">
+                  <div key={item.id} className="pt-4 first:pt-0 flex justify-between items-center text-[10px] tracking-wider uppercase">
+                    <div className="flex items-center gap-4">
+                      <div className="relative h-14 w-11 shrink-0 bg-white border border-black/10">
                         <Image src={item.image || "/placeholder.png"} alt={item.name} fill className="object-contain p-1" />
                       </div>
                       <div>
-                        <p className="font-medium max-w-[140px] truncate">{item.name}</p>
-                        <p className="text-black/40">SIZE: {item.size} × {item.quantity}</p>
+                        <p className="font-medium max-w-[140px] sm:max-w-[180px] truncate">{item.name}</p>
+                        <p className="text-black/40 text-[9px] pt-0.5">SIZE: {item.size} × {item.quantity}</p>
                       </div>
                     </div>
-                    <span>৳ {(item.price * item.quantity).toLocaleString()}</span>
+                    <span className="font-medium">৳ {(item.price * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 border-t border-black/10 pt-4 flex flex-col gap-2 text-[10px] tracking-wider uppercase">
+              <div className="mt-6 border-t border-black/10 pt-4 flex flex-col gap-3 text-[10px] tracking-wider uppercase">
                 <div className="flex justify-between text-black/60">
                   <span>SUBTOTAL</span>
                   <span>৳ {cartTotal.toLocaleString()}</span>
@@ -221,7 +206,7 @@ export default function CheckoutPage() {
                   <span>SHIPPING</span>
                   <span>৳ {shippingFee}</span>
                 </div>
-                <div className="flex justify-between font-semibold text-[11px] text-black pt-2 border-t border-black/10">
+                <div className="flex justify-between font-medium text-[11px] text-black pt-3 border-t border-black/10 tracking-[0.15em]">
                   <span>TOTAL</span>
                   <span>৳ {grandTotal.toLocaleString()}</span>
                 </div>
@@ -230,10 +215,21 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-8 w-full bg-black py-4 text-[10px] font-medium tracking-[0.3em] uppercase text-white hover:bg-black/80 transition-colors disabled:opacity-50"
+                className="mt-8 w-full border border-black bg-black py-4 text-[10px] font-medium tracking-[0.3em] uppercase text-white hover:bg-transparent hover:text-black transition-all duration-300 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? "PROCESSING ORDER..." : "PLACE ORDER"}
               </button>
+
+              <div className="border-t border-black/10 mt-6 pt-5 space-y-2 text-[8px] sm:text-[9px] tracking-[0.15em] text-black/40 uppercase">
+                <div className="flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-black/40" />
+                  <span>VERIFICATION CALL PRIOR TO DISPATCH</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-black/40" />
+                  <span>7-DAY RETURN & EXCHANGE POLICY</span>
+                </div>
+              </div>
             </div>
           </div>
         </form>

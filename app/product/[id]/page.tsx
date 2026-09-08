@@ -193,29 +193,29 @@ export default function ProductDetailPage({
 
               {/* GALLERY COUNTER */}
               {images.length > 1 && (
-                <div className="absolute top-6 right-6 text-[9px] font-medium tracking-[0.3em] text-black/40">
+                <div className="absolute top-4 right-4 text-[9px] font-mono tracking-[0.2em] text-black/40 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
                   {String(currentImgIndex + 1).padStart(2, "0")} / {String(images.length).padStart(2, "0")}
                 </div>
               )}
 
-              {/* CUSTOM SLEEK NAVIGATION ARROWS */}
+              {/* ELEGANT & COMPACT NAVIGATION ARROWS */}
               {images.length > 1 && (
                 <>
                   <button
                     onClick={handlePrevImage}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/80 backdrop-blur-md opacity-0 group-hover:opacity-100 hover:border-black hover:bg-black hover:text-white transition-all duration-300"
+                    className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/40 sm:bg-white/80 backdrop-blur-sm sm:backdrop-blur-md text-black/70 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-black hover:text-white transition-all duration-300 shadow-sm"
                     aria-label="Previous image"
                   >
-                    <svg className="h-4 w-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                     </svg>
                   </button>
                   <button
                     onClick={handleNextImage}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/80 backdrop-blur-md opacity-0 group-hover:opacity-100 hover:border-black hover:bg-black hover:text-white transition-all duration-300"
+                    className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/40 sm:bg-white/80 backdrop-blur-sm sm:backdrop-blur-md text-black/70 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-black hover:text-white transition-all duration-300 shadow-sm"
                     aria-label="Next image"
                   >
-                    <svg className="h-4 w-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
                   </button>
@@ -225,20 +225,20 @@ export default function ProductDetailPage({
 
             {/* THUMBNAIL PREVIEW STRIP */}
             {images.length > 1 && (
-              <div className="mt-8 flex justify-center gap-4 overflow-x-auto p-2">
+              <div className="mt-6 flex justify-center gap-3 overflow-x-auto p-1 max-w-full">
                 {images.map((img, idx) => {
                   const isActive = currentImgIndex === idx;
                   return (
                     <button
                       key={idx}
                       onClick={() => changeImage(idx)}
-                      className={`group relative aspect-square h-20 w-20 shrink-0 bg-neutral-50 transition-all duration-200 ${
+                      className={`group relative aspect-square h-14 w-14 sm:h-18 sm:w-18 shrink-0 bg-neutral-50 transition-all duration-200 ${
                         isActive
                           ? "border-2 border-black opacity-100"
-                          : "border border-black/15 opacity-40 hover:opacity-100"
+                          : "border border-black/10 opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <div className="relative h-full w-full p-2">
+                      <div className="relative h-full w-full p-1.5">
                         <Image
                           src={img}
                           alt={`Thumbnail ${idx + 1}`}
