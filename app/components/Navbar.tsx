@@ -1,12 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "../context/CartContext";
+
+interface Product {
+  id: string | number;
+  name: string;
+  price?: number;
+  price_formatted?: string;
+  images?: string[];
+  image?: string;
+}
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { cartCount } = useCart();
+
+  // Search Modal States
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch products when search opens
+  useEffect(() => {
+    if (isSearchOpen && products.length === 0) {
+      setLoading(true);
+      fetch("/api/products")
+        .then((res) => res.json())
+        .then((data) => setProducts(data))
+        .catch((err) => console.error("Failed to load search catalog:", err))
+        .finally(() => setLoading(false));
+    }
+  }, [isSearchOpen, products.length]);
+
+  // Focus & prevent background scrolling
+  useEffect(() => {
+    if (isSearchOpen) {
+      document.body.style.overflow = "hidden";
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [isSearchOpen]);
+
+  // ESC key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isSearchOpen) {
+        setIsSearchOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isSearchOpen]);
 
   function scrollToProducts() {
     setMenuOpen(false);
@@ -18,6 +69,24 @@ export default function Navbar() {
     }
   }
 
+  const formatPrice = (product: Product) => {
+    if (product.price_formatted) return product.price_formatted;
+    if (product.price != null && !isNaN(Number(product.price))) {
+      return `৳ ${Number(product.price).toLocaleString("en-BD")}.00`;
+    }
+    return "৳ 0.00";
+  };
+
+  const getPrimaryImage = (product: Product) => {
+    if (product.images && product.images.length > 0) return product.images[0];
+    if (product.image) return product.image;
+    return "/hero.png";
+  };
+
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-50 bg-gradient-to-b from-black/95 via-black/60 to-transparent px-5 py-5 text-white sm:px-12 sm:py-8 transition-all">
@@ -26,7 +95,7 @@ export default function Navbar() {
           <nav className="hidden items-center gap-8 text-[11px] font-medium tracking-[0.2em] uppercase sm:flex">
             <button
               onClick={scrollToProducts}
-              className="transition-opacity duration-300 hover:opacity-50"
+              className="transition-opacity duration-300 hover:opacity-50 cursor-pointer"
             >
               SHOP
             </button>
@@ -48,7 +117,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center gap-2.5 text-[10px] font-medium tracking-[0.25em] uppercase sm:hidden focus:outline-none"
+            className="flex items-center gap-2.5 text-[10px] font-medium tracking-[0.25em] uppercase sm:hidden focus:outline-none cursor-pointer"
             aria-label="Toggle navigation"
           >
             <div className="relative flex h-3.5 w-4 flex-col justify-between">
@@ -68,7 +137,9 @@ export default function Navbar() {
                 }`}
               />
             </div>
-            <span className="text-[10px] font-medium tracking-[0.2em]">{menuOpen ? "Close" : "Menu"}</span>
+            <span className="text-[10px] font-medium tracking-[0.2em]">
+              {menuOpen ? "Close" : "Menu"}
+            </span>
           </button>
 
           {/* Center Brand Text Logo */}
@@ -89,7 +160,8 @@ export default function Navbar() {
             </button>
             <button
               type="button"
-              className="hidden transition-opacity duration-300 hover:opacity-50 sm:block"
+              onClick={() => setIsSearchOpen(true)}
+              className="hidden transition-opacity duration-300 hover:opacity-50 sm:block cursor-pointer"
             >
               SEARCH
             </button>
@@ -115,9 +187,19 @@ export default function Navbar() {
           <div className="flex flex-col divide-y divide-white/10 border-y border-white/10">
             <button
               onClick={scrollToProducts}
-              className="py-5 text-left text-[12px] font-medium tracking-[0.25em] uppercase text-white transition-colors hover:text-white/50"
+              className="py-5 text-left text-[12px] font-medium tracking-[0.25em] uppercase text-white transition-colors hover:text-white/50 cursor-pointer"
             >
               Shop
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                setIsSearchOpen(true);
+              }}
+              className="py-5 text-left text-[12px] font-medium tracking-[0.25em] uppercase text-white transition-colors hover:text-white/50 cursor-pointer"
+            >
+              Search
             </button>
             <Link
               href="/#home"
@@ -148,6 +230,95 @@ export default function Navbar() {
           </div>
         </nav>
       </div>
+
+      {/* CENTERED POP-UP MODAL */}
+      {isSearchOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 sm:p-6"
+          onClick={() => setIsSearchOpen(false)}
+        >
+          {/* MODAL CARD */}
+          <div
+            className="relative flex max-h-[85vh] w-full max-w-[620px] flex-col rounded-2xl bg-white p-6 shadow-2xl text-black overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* SEARCH INPUT HEADER */}
+            <div className="relative flex items-center border-b border-gray-100 pb-4">
+              <svg
+                className="h-4 w-4 text-gray-400 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search"
+                className="ml-3 w-full bg-transparent text-[13px] font-medium text-black outline-none placeholder:text-gray-400"
+              />
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen(false)}
+                className="ml-2 text-gray-400 hover:text-black transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* RESULTS GRID AREA */}
+            <div className="mt-5 overflow-y-auto pr-1">
+              {loading ? (
+                <div className="py-12 text-center text-[11px] text-gray-400">
+                  Loading...
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="py-12 text-center text-[11px] text-gray-400">
+                  No products found
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-6">
+                  {filteredProducts.map((product) => {
+                    const mainImage = getPrimaryImage(product);
+                    return (
+                      <Link
+                        key={product.id}
+                        href={`/product/${product.id}`}
+                        onClick={() => setIsSearchOpen(false)}
+                        className="group flex flex-col text-left"
+                      >
+                        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-md bg-transparent">
+                          <Image
+                            src={mainImage}
+                            alt={product.name}
+                            fill
+                            sizes="(max-width: 640px) 50vw, 33vw"
+                            className="object-contain object-center mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                        <h2 className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-black group-hover:underline">
+                          {product.name}
+                        </h2>
+                        <p className="mt-0.5 text-[10px] font-medium text-gray-500">
+                          {formatPrice(product)}
+                        </p>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
