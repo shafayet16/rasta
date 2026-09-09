@@ -58,7 +58,7 @@ export default function Footer() {
 
           <div className="flex flex-col gap-2 text-[10px] font-normal tracking-[0.1em] uppercase text-black/70 sm:col-span-3">
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/rasta_clo/"
               target="_blank"
               rel="noreferrer"
               className="transition-colors hover:text-black"
@@ -66,12 +66,20 @@ export default function Footer() {
               Instagram
             </a>
             <a
-              href="https://tiktok.com"
+              href="https://www.tiktok.com/@rasta_clothing?_r=1&_t=ZS-99Z6osiPtdE"
               target="_blank"
               rel="noreferrer"
               className="transition-colors hover:text-black"
             >
               Tiktok
+            </a>
+            <a
+              href="https://www.facebook.com/share/19TxA6JbSV/?mibextid=wwXIfr"
+              target="_blank"
+              rel="noreferrer"
+              className="transition-colors hover:text-black"
+            >
+              Facebook
             </a>
           </div>
 

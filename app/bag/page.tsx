@@ -9,9 +9,6 @@ export default function BagPage() {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartCount } = useCart();
   const router = useRouter();
 
-  const shippingFee = cartTotal > 0 ? 120 : 0;
-  const grandTotal = cartTotal + shippingFee;
-
   const formatTaka = (amount: number) =>
     `৳ ${amount.toLocaleString("en-BD")}.00`;
 
@@ -161,20 +158,9 @@ export default function BagPage() {
                   ORDER SUMMARY
                 </h2>
 
-                <div className="space-y-3.5 text-[10px] sm:text-[11px] font-normal tracking-wide text-black/70">
-                  <div className="flex justify-between">
-                    <span>SUBTOTAL</span>
-                    <span className="text-black font-medium">{formatTaka(cartTotal)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>ESTIMATED SHIPPING (BD)</span>
-                    <span className="text-black font-medium">{formatTaka(shippingFee)}</span>
-                  </div>
-                </div>
-
-                <div className="border-t border-black/10 pt-4 flex justify-between text-[11px] sm:text-[12px] font-medium tracking-[0.15em] text-black">
-                  <span>TOTAL</span>
-                  <span>{formatTaka(grandTotal)}</span>
+                <div className="flex justify-between text-[11px] sm:text-[12px] font-medium tracking-[0.15em] text-black">
+                  <span>SUBTOTAL</span>
+                  <span>{formatTaka(cartTotal)}</span>
                 </div>
 
                 <div className="pt-2">
@@ -210,10 +196,10 @@ export default function BagPage() {
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-black/10 px-6 py-3.5 flex items-center justify-between shadow-lg">
           <div>
             <span className="text-[8px] font-medium tracking-[0.2em] uppercase text-black/40 block">
-              TOTAL (INCL. SHIPPING)
+              SUBTOTAL
             </span>
             <span className="text-[12px] font-semibold text-black tracking-wider">
-              {formatTaka(grandTotal)}
+              {formatTaka(cartTotal)}
             </span>
           </div>
           <button

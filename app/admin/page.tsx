@@ -23,6 +23,14 @@ interface Product {
   in_stock: boolean;
 }
 
+interface PaymentDetails {
+  senderPhone?: string;
+  sender_phone?: string;
+  transactionId?: string;
+  transaction_id?: string;
+  trx_id?: string;
+}
+
 interface Order {
   id: string;
   customer_name?: string;
@@ -37,6 +45,9 @@ interface Order {
   shipping_fee?: number;
   total?: number | string;
   payment_method?: string;
+  payment_details?: PaymentDetails | string;
+  sender_phone?: string;
+  transaction_id?: string;
   status?: string;
   created_at?: string;
   items?: OrderItem[] | string;
@@ -123,6 +134,36 @@ export default function AdminDashboard() {
     return [];
   };
 
+  const parsePaymentDetails = (order: Order): PaymentDetails => {
+    let details: PaymentDetails = {};
+
+    if (order.payment_details) {
+      if (typeof order.payment_details === "string") {
+        try {
+          details = JSON.parse(order.payment_details);
+        } catch {
+          details = {};
+        }
+      } else {
+        details = order.payment_details;
+      }
+    }
+
+    return {
+      senderPhone:
+        details.senderPhone ||
+        details.sender_phone ||
+        order.sender_phone ||
+        "N/A",
+      transactionId:
+        details.transactionId ||
+        details.transaction_id ||
+        details.trx_id ||
+        order.transaction_id ||
+        "N/A",
+    };
+  };
+
   const formatTaka = (amount?: number | string) => {
     if (amount == null || isNaN(Number(amount))) return "৳0";
     return `৳${Number(amount).toLocaleString("en-BD")}`;
@@ -195,6 +236,7 @@ export default function AdminDashboard() {
                   const phone = order.phone || order.customer_phone || "N/A";
                   const currentStatus = order.status || "pending";
                   const itemList = parseItems(order.items);
+                  const payInfo = parsePaymentDetails(order);
 
                   return (
                     <div key={order.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-black/[0.02]">
@@ -206,8 +248,14 @@ export default function AdminDashboard() {
                           <span className="text-black/50 text-[11px]">({phone})</span>
                         </div>
                         <p className="text-black/50 text-[11px]">
-                          {itemList.length} ITEM(S) — {formatTaka(order.total)}
+                          {itemList.length} ITEM(S) — {formatTaka(order.total)} | METHOD:{" "}
+                          <span className="font-bold text-black uppercase">{order.payment_method || "COD"}</span>
                         </p>
+                        {payInfo.transactionId !== "N/A" && (
+                          <p className="text-[10px] text-black/70 bg-neutral-100 border border-black/10 px-2 py-0.5 inline-block font-mono">
+                            TRXID: <span className="font-bold text-black uppercase">{payInfo.transactionId}</span> | SENDER: {payInfo.senderPhone}
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-4">
@@ -328,6 +376,27 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* PAYMENT VERIFICATION SECTION */}
+            <div className="border-b border-black/10 pb-4 text-xs font-mono bg-neutral-50 p-4 border border-black/10">
+              <span className="text-black/40 uppercase text-[10px] block font-bold mb-2">Payment Verification</span>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-black/50 text-[10px] block">Method:</span>
+                  <p className="font-bold text-black uppercase">{selectedOrder.payment_method || "COD"}</p>
+                </div>
+                <div>
+                  <span className="text-black/50 text-[10px] block">Sender Phone:</span>
+                  <p className="font-bold text-black">{parsePaymentDetails(selectedOrder).senderPhone}</p>
+                </div>
+                <div className="col-span-2 pt-2 border-t border-black/5">
+                  <span className="text-black/50 text-[10px] block">Transaction ID (TrxID):</span>
+                  <p className="font-mono font-bold text-black text-sm uppercase tracking-wider">
+                    {parsePaymentDetails(selectedOrder).transactionId}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* ORDERED ITEMS LIST */}
             <div className="space-y-3">
               <span className="font-mono text-[10px] tracking-widest uppercase text-black/50 block">Purchased Items</span>
@@ -348,7 +417,6 @@ export default function AdminDashboard() {
 
             {/* FINANCIAL BREAKDOWN */}
             <div className="border-t border-black pt-4 font-mono text-xs space-y-1 text-right">
-              <p className="text-black/60">Payment Method: <span className="font-bold uppercase">{selectedOrder.payment_method || "COD"}</span></p>
               <p className="text-black/60">Shipping Fee: <span className="font-bold">{formatTaka(selectedOrder.shipping_fee || 0)}</span></p>
               <p className="text-lg font-black uppercase text-black pt-2">
                 Total Amount: {formatTaka(selectedOrder.total)}

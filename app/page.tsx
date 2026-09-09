@@ -119,10 +119,15 @@ export default function Home() {
     return "৳ 0.00";
   };
 
-  const getProductImage = (product: Product) => {
+  const getPrimaryImage = (product: Product) => {
     if (product.images && product.images.length > 0) return product.images[0];
     if (product.image) return product.image;
     return "/hero.png";
+  };
+
+  const getSecondaryImage = (product: Product) => {
+    if (product.images && product.images.length > 1) return product.images[1];
+    return null;
   };
 
   return (
@@ -178,55 +183,74 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 bg-white">
-              {products.map((product) => (
-                <article
-                  key={product.id}
-                  className="product-card group flex flex-col text-left bg-white"
-                >
-                  <Link href={`/product/${product.id}`} className="block">
-                    <div className="relative aspect-[3/4] w-full overflow-hidden bg-white">
-                      <Image
-                        src={getProductImage(product)}
-                        alt={product.name}
-                        fill
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                        className="object-contain object-center transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-[1.04]"
-                      />
-                    </div>
-                  </Link>
+              {products.map((product) => {
+                const mainImage = getPrimaryImage(product);
+                const secondImage = getSecondaryImage(product);
 
-                  <div className="mt-4 flex items-start justify-between gap-1 text-[11px] font-normal tracking-wide uppercase text-black">
-                    <Link
-                      href={`/product/${product.id}`}
-                      className="leading-tight hover:underline"
-                    >
-                      {product.name}
+                return (
+                  <article
+                    key={product.id}
+                    className="product-card group flex flex-col text-left bg-white"
+                  >
+                    <Link href={`/product/${product.id}`} className="block">
+                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-transparent">
+                        {/* PRIMARY IMAGE */}
+                        <Image
+                          src={mainImage}
+                          alt={product.name}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                          className={`object-contain object-center transition-opacity duration-300 ease-out ${
+                            secondImage ? "opacity-100 group-hover:opacity-0" : ""
+                          }`}
+                        />
+
+                        {/* SECONDARY HOVER IMAGE */}
+                        {secondImage && (
+                          <Image
+                            src={secondImage}
+                            alt={`${product.name} alternate view`}
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                            className="object-contain object-center opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+                          />
+                        )}
+                      </div>
                     </Link>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart({
-                          productId: String(product.id),
-                          name: product.name,
-                          price: Number(product.price || 0),
-                          image: getProductImage(product),
-                          quantity: 1,
-                          size: "M",
-                        });
-                      }}
-                      className="text-[14px] leading-none text-black/60 transition-colors duration-300 hover:text-black font-bold p-1"
-                      aria-label={`Add ${product.name} to cart`}
-                    >
-                      +
-                    </button>
-                  </div>
 
-                  <p className="mt-1 text-[11px] font-normal text-black/60">
-                    {formatPrice(product)}
-                  </p>
-                </article>
-              ))}
+                    <div className="mt-4 flex items-start justify-between gap-1 text-[11px] font-normal tracking-wide uppercase text-black">
+                      <Link
+                        href={`/product/${product.id}`}
+                        className="leading-tight hover:underline"
+                      >
+                        {product.name}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart({
+                            productId: String(product.id),
+                            name: product.name,
+                            price: Number(product.price || 0),
+                            image: mainImage,
+                            quantity: 1,
+                            size: "M",
+                          });
+                        }}
+                        className="text-[14px] leading-none text-black/60 transition-colors duration-300 hover:text-black font-bold p-1 cursor-pointer"
+                        aria-label={`Add ${product.name} to cart`}
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <p className="mt-1 text-[11px] font-normal text-black/60">
+                      {formatPrice(product)}
+                    </p>
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>

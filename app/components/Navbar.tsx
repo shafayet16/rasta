@@ -48,7 +48,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center gap-2.5 text-[10px] tracking-[0.25em] uppercase sm:hidden focus:outline-none"
+            className="flex items-center gap-2.5 text-[10px] font-medium tracking-[0.25em] uppercase sm:hidden focus:outline-none"
             aria-label="Toggle navigation"
           >
             <div className="relative flex h-3.5 w-4 flex-col justify-between">
@@ -68,7 +68,7 @@ export default function Navbar() {
                 }`}
               />
             </div>
-            <span className="font-mono text-[10px]">{menuOpen ? "Close" : "Menu"}</span>
+            <span className="text-[10px] font-medium tracking-[0.2em]">{menuOpen ? "Close" : "Menu"}</span>
           </button>
 
           {/* Center Brand Text Logo */}
@@ -95,7 +95,7 @@ export default function Navbar() {
             </button>
             <Link
               href="/bag"
-              className="transition-opacity duration-300 hover:opacity-50 font-mono text-[11px]"
+              className="transition-opacity duration-300 hover:opacity-50 text-[11px] font-medium tracking-[0.2em]"
             >
               Bag ({cartCount})
             </Link>
@@ -105,46 +105,46 @@ export default function Navbar() {
 
       {/* Full-Screen Mobile Drawer Overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-black/90 backdrop-blur-xl transition-all duration-500 sm:hidden ${
+        className={`fixed inset-0 z-40 bg-black/95 backdrop-blur-xl transition-all duration-500 sm:hidden ${
           menuOpen
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
         }`}
       >
-        <nav className="flex h-full flex-col justify-between px-8 pt-28 pb-12 font-mono text-xs tracking-[0.25em] uppercase text-white">
+        <nav className="flex h-full flex-col justify-between px-8 pt-28 pb-12 text-[11px] font-medium tracking-[0.2em] uppercase text-white">
           <div className="flex flex-col divide-y divide-white/10 border-y border-white/10">
             <button
               onClick={scrollToProducts}
-              className="py-5 text-left transition-colors hover:text-neutral-400"
+              className="py-5 text-left transition-colors hover:text-white/50"
             >
               Shop Collection
             </button>
             <Link
               href="/#home"
               onClick={() => setMenuOpen(false)}
-              className="py-5 text-left transition-colors hover:text-neutral-400"
+              className="py-5 text-left transition-colors hover:text-white/50"
             >
               Home
             </Link>
             <a
               href="#contact"
               onClick={() => setMenuOpen(false)}
-              className="py-5 text-left transition-colors hover:text-neutral-400"
+              className="py-5 text-left transition-colors hover:text-white/50"
             >
               Contact
             </a>
             <Link
               href="/bag"
               onClick={() => setMenuOpen(false)}
-              className="py-5 text-left transition-colors hover:text-neutral-400"
+              className="py-5 text-left transition-colors hover:text-white/50"
             >
               Shopping Bag ({cartCount})
             </Link>
           </div>
 
-          <div className="space-y-2 text-[10px] text-neutral-500 tracking-widest">
-            <p>Region: Bangladesh (BDT ৳)</p>
-            <p>© RASTA Official Store</p>
+          <div className="space-y-2 text-[9px] font-medium text-white/40 tracking-[0.25em]">
+            <p>REGION: BANGLADESH (BDT ৳)</p>
+            <p>© RASTA OFFICIAL STORE</p>
           </div>
         </nav>
       </div>

@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const sql = neon(process.env.DATABASE_URL!);
     const body = await req.json();
 
-    const { customer, items, subtotal, shippingFee, total, paymentMethod } = body;
+    const { customer, items, subtotal, shippingFee, total, paymentMethod, paymentDetails } = body;
 
     const fullNameValue = customer?.fullName || customer?.name || customer?.customer_name;
     const phoneValue = customer?.phone || customer?.phoneNumber || customer?.phone_number;
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
 
-    // 1. Ensure table structure exists
+    // 1. Ensure table structure exists with payment verification columns
     await sql`
       CREATE TABLE IF NOT EXISTS orders (
         id VARCHAR(50) PRIMARY KEY,
@@ -45,13 +45,19 @@ export async function POST(req: Request) {
         shipping_fee NUMERIC NOT NULL,
         total NUMERIC NOT NULL,
         payment_method VARCHAR(20) NOT NULL,
+        payment_details JSONB,
+        sender_phone TEXT,
+        transaction_id TEXT,
         status VARCHAR(20) DEFAULT 'pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
 
-    // 2. Clear legacy table constraints dynamically
+    // 2. Safely add missing columns for existing tables & adjust constraints
     try {
+      await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_details JSONB;`;
+      await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS sender_phone TEXT;`;
+      await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS transaction_id TEXT;`;
       await sql`ALTER TABLE orders ALTER COLUMN id DROP DEFAULT;`;
       await sql`ALTER TABLE orders ALTER COLUMN id TYPE VARCHAR(50) USING id::text;`;
       await sql`ALTER TABLE orders ALTER COLUMN customer_email DROP NOT NULL;`;
@@ -60,15 +66,18 @@ export async function POST(req: Request) {
       await sql`ALTER TABLE orders ALTER COLUMN phone DROP NOT NULL;`;
       await sql`ALTER TABLE orders ALTER COLUMN shipping_address DROP NOT NULL;`;
     } catch {
-      // Ignore if columns do not exist or are already non-restrictive
+      // Ignore non-fatal migration warnings
     }
 
     const customerEmail = customer?.email?.trim() || "N/A";
+    const senderPhone = paymentDetails?.senderPhone || null;
+    const transactionId = paymentDetails?.transactionId || null;
 
     await sql`
       INSERT INTO orders (
         id, customer_name, phone, email, address, city, 
-        items, subtotal, shipping_fee, total, payment_method
+        items, subtotal, shipping_fee, total, payment_method,
+        payment_details, sender_phone, transaction_id
       )
       VALUES (
         ${orderId},
@@ -81,7 +90,10 @@ export async function POST(req: Request) {
         ${Number(subtotal) || 0},
         ${Number(shippingFee) || 0},
         ${Number(total) || 0},
-        ${paymentMethod || "COD"}
+        ${paymentMethod || "COD"},
+        ${paymentDetails ? JSON.stringify(paymentDetails) : null},
+        ${senderPhone},
+        ${transactionId}
       )
     `;
 

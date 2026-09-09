@@ -19,6 +19,9 @@ export default function CheckoutPage() {
     address: "",
     city: "Dhaka",
     notes: "",
+    paymentMethod: "cod", // "cod" | "bkash" | "nagad"
+    senderPhone: "",
+    transactionId: "",
   });
 
   const shippingFee = formData.city.toLowerCase() === "dhaka" ? 80 : 130;
@@ -34,6 +37,14 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (cart.length === 0) return;
 
+    if (
+      (formData.paymentMethod === "bkash" || formData.paymentMethod === "nagad") &&
+      (!formData.senderPhone || !formData.transactionId)
+    ) {
+      alert("Please provide the sender phone number and Transaction ID for digital payments.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -46,7 +57,11 @@ export default function CheckoutPage() {
           subtotal: cartTotal,
           shippingFee,
           total: grandTotal,
-          paymentMethod: "cod",
+          paymentMethod: formData.paymentMethod,
+          paymentDetails: {
+            senderPhone: formData.senderPhone,
+            transactionId: formData.transactionId,
+          },
         }),
       });
 
@@ -163,12 +178,111 @@ export default function CheckoutPage() {
               <h2 className="mb-6 text-[10px] font-medium tracking-[0.25em] text-black border-b border-black/10 pb-3">
                 2. PAYMENT METHOD
               </h2>
-              <div className="border border-black p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="h-2 w-2 rounded-full bg-black" />
-                  <span className="font-medium text-[10px] tracking-[0.2em]">CASH ON DELIVERY (COD)</span>
+
+              <div className="grid grid-cols-1 gap-3">
+                {/* CASH ON DELIVERY */}
+                <label
+                  onClick={() => setFormData({ ...formData, paymentMethod: "cod" })}
+                  className={`border p-4 flex items-center justify-between cursor-pointer transition-all ${
+                    formData.paymentMethod === "cod" ? "border-black bg-neutral-50" : "border-black/10 hover:border-black/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`h-2.5 w-2.5 rounded-full border border-black ${formData.paymentMethod === "cod" ? "bg-black" : "bg-transparent"}`} />
+                    <span className="font-medium text-[10px] tracking-[0.2em]">CASH ON DELIVERY (COD)</span>
+                  </div>
+                  <span className="text-[9px] text-black/40 tracking-[0.15em]">PAY UPON RECEIVING</span>
+                </label>
+
+                {/* BKASH */}
+                <label
+                  onClick={() => setFormData({ ...formData, paymentMethod: "bkash" })}
+                  className={`border p-4 flex items-center justify-between cursor-pointer transition-all ${
+                    formData.paymentMethod === "bkash" ? "border-black bg-neutral-50" : "border-black/10 hover:border-black/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`h-2.5 w-2.5 rounded-full border border-black ${formData.paymentMethod === "bkash" ? "bg-black" : "bg-transparent"}`} />
+                    <span className="font-medium text-[10px] tracking-[0.2em]">BKASH</span>
+                  </div>
+                  <span className="text-[9px] text-pink-600 font-bold tracking-[0.15em]">01847791140</span>
+                </label>
+
+                {/* NAGAD */}
+                <label
+                  onClick={() => setFormData({ ...formData, paymentMethod: "nagad" })}
+                  className={`border p-4 flex items-center justify-between cursor-pointer transition-all ${
+                    formData.paymentMethod === "nagad" ? "border-black bg-neutral-50" : "border-black/10 hover:border-black/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`h-2.5 w-2.5 rounded-full border border-black ${formData.paymentMethod === "nagad" ? "bg-black" : "bg-transparent"}`} />
+                    <span className="font-medium text-[10px] tracking-[0.2em]">NAGAD</span>
+                  </div>
+                  <span className="text-[9px] text-orange-600 font-bold tracking-[0.15em]">01706379209</span>
+                </label>
+              </div>
+
+              {/* DYNAMIC PAYMENT INSTRUCTION PANEL */}
+              <div className="mt-6 border border-black/20 p-5 bg-neutral-50 text-[10px] normal-case tracking-normal">
+                {formData.paymentMethod === "cod" ? (
+                  <div className="space-y-2">
+                    <p className="font-medium uppercase tracking-[0.15em] text-black">
+                      ORDER CONFIRMATION REQUIREMENT:
+                    </p>
+                    <p className="text-black/70 leading-relaxed">
+                      To confirm your Cash on Delivery order, please send the delivery charge of{" "}
+                      <span className="font-bold text-black">৳ {shippingFee}</span> via bKash (
+                      <span className="font-mono text-black font-semibold">01847791140</span>) or Nagad (
+                      <span className="font-mono text-black font-semibold">01706379209</span>). The remaining product amount of{" "}
+                      <span className="font-bold text-black">৳ {cartTotal.toLocaleString()}</span> will be collected at delivery.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="font-medium uppercase tracking-[0.15em] text-black">
+                      PAYMENT INSTRUCTIONS ({formData.paymentMethod.toUpperCase()}):
+                    </p>
+                    <p className="text-black/70 leading-relaxed">
+                      Please send the full amount including delivery charge (<span className="font-bold text-black">৳ {grandTotal.toLocaleString()}</span>) to{" "}
+                      <span className="font-bold text-black">
+                        {formData.paymentMethod === "bkash" ? "01847791140 (bKash)" : "01706379209 (Nagad)"}
+                      </span>.
+                    </p>
+                  </div>
+                )}
+
+                {/* TRANSACTION VERIFICATION INPUTS */}
+                <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 border-t border-black/10 pt-4">
+                  <div>
+                    <label className="mb-1.5 block text-black/60 text-[9px] tracking-[0.15em] uppercase font-medium">
+                      SENDER PHONE NUMBER *
+                    </label>
+                    <input
+                      type="tel"
+                      name="senderPhone"
+                      required
+                      placeholder="01XXXXXXXXX"
+                      value={formData.senderPhone}
+                      onChange={handleInputChange}
+                      className="w-full border border-black/20 p-3 text-[11px] text-black focus:border-black focus:outline-none bg-white transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-black/60 text-[9px] tracking-[0.15em] uppercase font-medium">
+                      TRANSACTION ID (TRXID) *
+                    </label>
+                    <input
+                      type="text"
+                      name="transactionId"
+                      required
+                      placeholder="e.g. BXA8923JK"
+                      value={formData.transactionId}
+                      onChange={handleInputChange}
+                      className="w-full border border-black/20 p-3 text-[11px] text-black focus:border-black focus:outline-none uppercase bg-white transition-colors"
+                    />
+                  </div>
                 </div>
-                <span className="text-[9px] text-black/40 tracking-[0.15em]">PAY UPON RECEIVING</span>
               </div>
             </div>
           </div>

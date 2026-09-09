@@ -235,6 +235,8 @@ export default function ShopPage() {
           >
             {filteredProducts.map((product) => {
               const mainImage = product.images?.[0] || product.image || "/placeholder.png";
+              const secondImage = product.images?.[1] || null;
+              
               const formattedPrice =
                 product.price_formatted ||
                 product.priceFormatted ||
@@ -244,14 +246,29 @@ export default function ShopPage() {
               return (
                 <article key={product.id} className="group flex flex-col text-left">
                   <Link href={`/product/${product.slug || product.id}`}>
-                    <div className="relative aspect-square w-full overflow-hidden bg-white">
+                    <div className="relative aspect-square w-full overflow-hidden bg-transparent">
+                      {/* PRIMARY IMAGE */}
                       <Image
                         src={mainImage}
                         alt={product.name}
                         fill
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                        className="object-contain object-center transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-[1.05]"
+                        className={`object-contain object-center transition-opacity duration-300 ease-out ${
+                          secondImage ? "opacity-100 group-hover:opacity-0" : ""
+                        }`}
                       />
+
+                      {/* SECONDARY HOVER IMAGE */}
+                      {secondImage && (
+                        <Image
+                          src={secondImage}
+                          alt={`${product.name} alternate view`}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                          className="object-contain object-center opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+                        />
+                      )}
+
                       {!isAvailable && (
                         <span className="absolute top-2 left-2 bg-black px-2 py-1 text-[9px] font-medium tracking-widest text-white uppercase z-10">
                           Sold Out

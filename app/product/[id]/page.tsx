@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useRef } from "react";
 import { useCart } from "../../context/CartContext";
 
 interface Product {
@@ -34,7 +34,7 @@ export default function ProductDetailPage({
   // Gallery & Interaction state
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>("");
-  const [isFading, setIsFading] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Accordion state
   const [openAccordion, setOpenAccordion] = useState<string | null>("description");
@@ -75,13 +75,29 @@ export default function ProductDetailPage({
     fetchData();
   }, [productId]);
 
+  const images = product?.images && product.images.length > 0 ? product.images : ["/placeholder.png"];
+
+  // Handle active index updates on swipe
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const width = scrollContainerRef.current.offsetWidth;
+    if (width > 0) {
+      const newIndex = Math.round(scrollContainerRef.current.scrollLeft / width);
+      if (newIndex !== currentImgIndex && newIndex >= 0 && newIndex < images.length) {
+        setCurrentImgIndex(newIndex);
+      }
+    }
+  };
+
   const changeImage = (newIndex: number) => {
-    if (newIndex === currentImgIndex || isFading) return;
-    setIsFading(true);
-    setTimeout(() => {
-      setCurrentImgIndex(newIndex);
-      setIsFading(false);
-    }, 150);
+    setCurrentImgIndex(newIndex);
+    if (scrollContainerRef.current) {
+      const width = scrollContainerRef.current.offsetWidth;
+      scrollContainerRef.current.scrollTo({
+        left: width * newIndex,
+        behavior: "smooth",
+      });
+    }
   };
 
   const handlePrevImage = () => {
@@ -154,11 +170,9 @@ export default function ProductDetailPage({
     );
   }
 
-  const images = product.images && product.images.length > 0 ? product.images : ["/placeholder.png"];
   const formattedPrice =
     product.price_formatted || `৳ ${Number(product.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
-  // Parse multi-line descriptions into individual one-liner items
   const descriptionBullets = product.description
     ? product.description
         .split("\n")
@@ -173,53 +187,62 @@ export default function ProductDetailPage({
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
           
           {/* LEFT: GALLERY & CAROUSEL (7 COLS) */}
-          <div className="flex flex-col items-center lg:col-span-7">
-            <div className="group relative aspect-[4/5] w-full max-w-[650px] overflow-hidden bg-neutral-50/50">
+          <div className="flex flex-col items-center lg:col-span-7 w-full">
+            <div className="group relative w-full max-w-[650px]">
               
-              {/* IMAGE DISPLAY WITH SMOOTH TRANSITION */}
+              {/* SWIPEABLE GALLERY CONTAINER */}
               <div
-                className={`relative h-full w-full transition-opacity duration-300 ease-in-out ${
-                  isFading ? "opacity-0" : "opacity-100"
-                }`}
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="flex aspect-[4/5] w-full overflow-x-auto snap-x snap-mandatory bg-neutral-50/50 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               >
-                <Image
-                  src={images[currentImgIndex]}
-                  alt={product.name}
-                  fill
-                  priority
-                  className="object-contain object-center p-4 transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-                />
+                {images.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className="relative h-full w-full shrink-0 snap-center"
+                  >
+                    <Image
+                      src={img}
+                      alt={`${product.name} image ${idx + 1}`}
+                      fill
+                      priority={idx === 0}
+                      className="object-contain object-center p-4 transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                    />
+                  </div>
+                ))}
               </div>
 
               {/* GALLERY COUNTER */}
               {images.length > 1 && (
-                <div className="absolute top-4 right-4 text-[9px] font-mono tracking-[0.2em] text-black/40 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
+                <div className="absolute top-4 right-4 text-[9px] font-mono tracking-[0.2em] text-black/40 bg-white/50 backdrop-blur-sm px-2 py-1 rounded z-10 pointer-events-none">
                   {String(currentImgIndex + 1).padStart(2, "0")} / {String(images.length).padStart(2, "0")}
                 </div>
               )}
 
-              {/* ELEGANT & COMPACT NAVIGATION ARROWS */}
+              {/* DESKTOP-ONLY NAVIGATION ARROWS */}
               {images.length > 1 && (
-                <>
+                <div className="hidden lg:block">
                   <button
+                    type="button"
                     onClick={handlePrevImage}
-                    className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/40 sm:bg-white/80 backdrop-blur-sm sm:backdrop-blur-md text-black/70 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-black hover:text-white transition-all duration-300 shadow-sm"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 backdrop-blur-md text-black/70 opacity-0 group-hover:opacity-100 hover:bg-black hover:text-white transition-all duration-300 shadow-sm z-10 cursor-pointer"
                     aria-label="Previous image"
                   >
-                    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.2">
+                    <svg className="h-4 w-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                     </svg>
                   </button>
                   <button
+                    type="button"
                     onClick={handleNextImage}
-                    className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/40 sm:bg-white/80 backdrop-blur-sm sm:backdrop-blur-md text-black/70 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-black hover:text-white transition-all duration-300 shadow-sm"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 backdrop-blur-md text-black/70 opacity-0 group-hover:opacity-100 hover:bg-black hover:text-white transition-all duration-300 shadow-sm z-10 cursor-pointer"
                     aria-label="Next image"
                   >
-                    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.2">
+                    <svg className="h-4 w-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
                   </button>
-                </>
+                </div>
               )}
             </div>
 
@@ -231,8 +254,9 @@ export default function ProductDetailPage({
                   return (
                     <button
                       key={idx}
+                      type="button"
                       onClick={() => changeImage(idx)}
-                      className={`group relative aspect-square h-14 w-14 sm:h-18 sm:w-18 shrink-0 bg-neutral-50 transition-all duration-200 ${
+                      className={`group relative aspect-square h-14 w-14 sm:h-18 sm:w-18 shrink-0 bg-neutral-50 transition-all duration-200 cursor-pointer ${
                         isActive
                           ? "border-2 border-black opacity-100"
                           : "border border-black/10 opacity-50 hover:opacity-100"
@@ -267,7 +291,7 @@ export default function ProductDetailPage({
               <div className="mt-10 border-t border-black/10 pt-8">
                 <div className="flex items-center justify-between text-[10px] font-medium tracking-[0.2em] uppercase">
                   <span>SELECT SIZE</span>
-                  <button className="text-black/50 underline underline-offset-4 hover:text-black transition-colors">
+                  <button type="button" className="text-black/50 underline underline-offset-4 hover:text-black transition-colors">
                     SIZE GUIDE
                   </button>
                 </div>
@@ -276,8 +300,9 @@ export default function ProductDetailPage({
                   {product.sizes.map((size) => (
                     <button
                       key={size}
+                      type="button"
                       onClick={() => setSelectedSize(size)}
-                      className={`flex h-10 w-12 items-center justify-center border text-[10px] transition-all duration-300 ${
+                      className={`flex h-10 w-12 items-center justify-center border text-[10px] transition-all duration-300 cursor-pointer ${
                         selectedSize === size
                           ? "border-black bg-black text-white"
                           : "border-black/20 bg-transparent text-black/60 hover:border-black hover:text-black"
@@ -308,8 +333,9 @@ export default function ProductDetailPage({
               {/* ACCORDION ITEM: DESCRIPTION */}
               <div className="border-b border-black/10">
                 <button
+                  type="button"
                   onClick={() => toggleAccordion("description")}
-                  className="flex w-full items-center justify-between py-5 text-left font-medium transition-colors hover:text-black/60"
+                  className="flex w-full items-center justify-between py-5 text-left font-medium transition-colors hover:text-black/60 cursor-pointer"
                 >
                   <span>DESCRIPTION</span>
                   <span className="text-[14px] transition-transform duration-300">
@@ -341,8 +367,9 @@ export default function ProductDetailPage({
               {/* ACCORDION ITEM: SHIPPING */}
               <div className="border-b border-black/10">
                 <button
+                  type="button"
                   onClick={() => toggleAccordion("shipping")}
-                  className="flex w-full items-center justify-between py-5 text-left font-medium transition-colors hover:text-black/60"
+                  className="flex w-full items-center justify-between py-5 text-left font-medium transition-colors hover:text-black/60 cursor-pointer"
                 >
                   <span>SHIPPING & DELIVERY</span>
                   <span className="text-[14px] transition-transform duration-300">
@@ -363,8 +390,9 @@ export default function ProductDetailPage({
               {/* ACCORDION ITEM: RETURNS */}
               <div className="border-b border-black/10">
                 <button
+                  type="button"
                   onClick={() => toggleAccordion("return")}
-                  className="flex w-full items-center justify-between py-5 text-left font-medium transition-colors hover:text-black/60"
+                  className="flex w-full items-center justify-between py-5 text-left font-medium transition-colors hover:text-black/60 cursor-pointer"
                 >
                   <span>RETURNS & EXCHANGES</span>
                   <span className="text-[14px] transition-transform duration-300">
