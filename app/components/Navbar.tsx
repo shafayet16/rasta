@@ -91,7 +91,7 @@ export default function Navbar() {
               type="button"
               className="hidden transition-opacity duration-300 hover:opacity-50 sm:block"
             >
-              Search
+              SEARCH
             </button>
             <Link
               href="/bag"
