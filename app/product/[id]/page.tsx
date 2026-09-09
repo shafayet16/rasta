@@ -394,7 +394,7 @@ export default function ProductDetailPage({
                   onClick={() => toggleAccordion("return")}
                   className="flex w-full items-center justify-between py-5 text-left font-medium transition-colors hover:text-black/60 cursor-pointer"
                 >
-                  <span>RETURNS & EXCHANGES</span>
+                  <span>EXCHANGES</span>
                   <span className="text-[14px] transition-transform duration-300">
                     {openAccordion === "return" ? "−" : "+"}
                   </span>
@@ -405,7 +405,7 @@ export default function ProductDetailPage({
                   }`}
                 >
                   <div className="overflow-hidden text-[11px] leading-relaxed tracking-normal text-black/70 normal-case">
-                    Exchanges allowed within 7 days of delivery for unworn items in original packaging.
+                    Exchanges allowed within 2-3 days of delivery for unworn items in original packaging.
                   </div>
                 </div>
               </div>
