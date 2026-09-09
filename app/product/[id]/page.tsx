@@ -198,7 +198,7 @@ export default function ProductDetailPage({
               <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="flex aspect-[4/5] w-full overflow-x-auto snap-x snap-mandatory bg-neutral-50/50 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                className="flex aspect-[4/5] w-full overflow-x-auto snap-x snap-mandatory bg-transparent [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               >
                 {images.map((img, idx) => (
                   <div
@@ -210,7 +210,7 @@ export default function ProductDetailPage({
                       alt={`${product.name} image ${idx + 1}`}
                       fill
                       priority={idx === 0}
-                      className="object-contain object-center p-4 transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                      className="object-contain object-center mix-blend-multiply transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                     />
                   </div>
                 ))}
@@ -260,7 +260,7 @@ export default function ProductDetailPage({
                       key={idx}
                       type="button"
                       onClick={() => changeImage(idx)}
-                      className={`group relative aspect-square h-14 w-14 sm:h-18 sm:w-18 shrink-0 bg-neutral-50 transition-all duration-200 cursor-pointer ${
+                      className={`group relative aspect-square h-14 w-14 sm:h-18 sm:w-18 shrink-0 bg-transparent transition-all duration-200 cursor-pointer ${
                         isActive
                           ? "border-2 border-black opacity-100"
                           : "border border-black/10 opacity-50 hover:opacity-100"
@@ -271,7 +271,7 @@ export default function ProductDetailPage({
                           src={img}
                           alt={`Thumbnail ${idx + 1}`}
                           fill
-                          className="object-contain"
+                          className="object-contain mix-blend-multiply"
                         />
                       </div>
                     </button>
@@ -433,8 +433,8 @@ export default function ProductDetailPage({
               <div className="flex flex-col items-center gap-6 sm:flex-row sm:gap-10">
                 {/* PRIMARY PRODUCT */}
                 <div className="flex flex-col">
-                  <div className="relative aspect-[3/4] w-44 sm:w-56 bg-neutral-50/50">
-                    <Image src={images[0]} alt={product.name} fill className="object-contain p-2" />
+                  <div className="relative aspect-[3/4] w-44 sm:w-56 bg-transparent">
+                    <Image src={images[0]} alt={product.name} fill className="object-contain mix-blend-multiply" />
                   </div>
                   <div className="mt-4 flex items-center justify-between text-[10px] tracking-wider uppercase">
                     <span className="truncate max-w-[120px]">{product.name}</span>
@@ -447,12 +447,12 @@ export default function ProductDetailPage({
 
                 {/* PAIR PRODUCT */}
                 <div className="flex flex-col">
-                  <div className="relative aspect-[3/4] w-44 sm:w-56 bg-neutral-50/50">
+                  <div className="relative aspect-[3/4] w-44 sm:w-56 bg-transparent">
                     <Image
                       src={pairProduct.images?.[0] || "/placeholder.png"}
                       alt={pairProduct.name}
                       fill
-                      className="object-contain p-2"
+                      className="object-contain mix-blend-multiply"
                     />
                   </div>
                   <div className="mt-4 flex items-center justify-between text-[10px] tracking-wider uppercase">
@@ -498,13 +498,13 @@ export default function ProductDetailPage({
                 return (
                   <article key={rec.id} className="group flex flex-col">
                     <Link href={`/product/${rec.slug || rec.id}`}>
-                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-50/50">
+                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-transparent">
                         <Image
                           src={recImg}
                           alt={rec.name}
                           fill
                           sizes="(max-width: 640px) 50vw, 25vw"
-                          className="object-contain p-2 transition-transform duration-700 ease-out group-hover:scale-105"
+                          className="object-contain mix-blend-multiply transition-transform duration-700 ease-out group-hover:scale-105"
                         />
                       </div>
                     </Link>
@@ -548,12 +548,12 @@ export default function ProductDetailPage({
               </button>
             </div>
 
-            <div className="relative aspect-[4/5] w-full bg-neutral-50">
+            <div className="relative aspect-[4/5] w-full bg-transparent">
               <Image
                 src={lastImage}
                 alt={`${product.name} Size Guide`}
                 fill
-                className="object-contain p-2"
+                className="object-contain mix-blend-multiply"
               />
             </div>
           </div>
@@ -563,8 +563,8 @@ export default function ProductDetailPage({
       {/* FLOATING STICKY BOTTOM BAR */}
       <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between border-t border-black/10 bg-white/90 px-6 py-3.5 backdrop-blur-md sm:px-12 transition-all">
         <div className="flex items-center gap-4">
-          <div className="relative h-10 w-10 overflow-hidden bg-neutral-50 border border-black/10">
-            <Image src={images[0]} alt={product.name} fill className="object-contain p-1" />
+          <div className="relative h-10 w-10 overflow-hidden bg-transparent">
+            <Image src={images[0]} alt={product.name} fill className="object-contain mix-blend-multiply" />
           </div>
           <div>
             <p className="text-[10px] font-medium tracking-widest uppercase">{product.name}</p>
