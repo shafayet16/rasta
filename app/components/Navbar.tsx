@@ -111,38 +111,38 @@ export default function Navbar() {
             : "opacity-0 pointer-events-none"
         }`}
       >
-        <nav className="flex h-full flex-col justify-between px-8 pt-28 pb-12 text-[11px] font-medium tracking-[0.2em] uppercase text-white">
+        <nav className="flex h-full flex-col justify-between px-8 pt-28 pb-12">
           <div className="flex flex-col divide-y divide-white/10 border-y border-white/10">
             <button
               onClick={scrollToProducts}
-              className="py-5 text-left transition-colors hover:text-white/50"
+              className="py-5 text-left text-[12px] font-medium tracking-[0.25em] uppercase text-white transition-colors hover:text-white/50"
             >
-              Shop Collection
+              Shop
             </button>
             <Link
               href="/#home"
               onClick={() => setMenuOpen(false)}
-              className="py-5 text-left transition-colors hover:text-white/50"
+              className="py-5 text-left text-[12px] font-medium tracking-[0.25em] uppercase text-white transition-colors hover:text-white/50"
             >
               Home
             </Link>
             <a
               href="#contact"
               onClick={() => setMenuOpen(false)}
-              className="py-5 text-left transition-colors hover:text-white/50"
+              className="py-5 text-left text-[12px] font-medium tracking-[0.25em] uppercase text-white transition-colors hover:text-white/50"
             >
               Contact
             </a>
             <Link
               href="/bag"
               onClick={() => setMenuOpen(false)}
-              className="py-5 text-left transition-colors hover:text-white/50"
+              className="py-5 text-left text-[12px] font-medium tracking-[0.25em] uppercase text-white transition-colors hover:text-white/50"
             >
               Shopping Bag ({cartCount})
             </Link>
           </div>
 
-          <div className="space-y-2 text-[9px] font-medium text-white/40 tracking-[0.25em]">
+          <div className="space-y-2 text-[9px] font-medium text-white/40 tracking-[0.25em] uppercase">
             <p>REGION: BANGLADESH (BDT ৳)</p>
             <p>© RASTA OFFICIAL STORE</p>
           </div>
