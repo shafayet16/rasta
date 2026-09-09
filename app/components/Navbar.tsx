@@ -28,7 +28,7 @@ export default function Navbar() {
               onClick={scrollToProducts}
               className="transition-opacity duration-300 hover:opacity-50"
             >
-              Shop
+              SHOP
             </button>
             <Link
               href="/#home"
