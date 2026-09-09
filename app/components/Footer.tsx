@@ -45,7 +45,7 @@ export default function Footer() {
             <a href="#contact" className="transition-colors hover:text-black">
               Privacy Policy
             </a>
-            <a href="#contact" className="transition-colors hover:text-black">
+            <a href="./refund-policy" className="transition-colors hover:text-black">
               Refund Policy
             </a>
             <a href="#contact" className="transition-colors hover:text-black">

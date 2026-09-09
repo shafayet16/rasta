@@ -36,6 +36,9 @@ export default function ProductDetailPage({
   const [selectedSize, setSelectedSize] = useState<string>("");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Size Guide Modal state
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+
   // Accordion state
   const [openAccordion, setOpenAccordion] = useState<string | null>("description");
 
@@ -76,6 +79,7 @@ export default function ProductDetailPage({
   }, [productId]);
 
   const images = product?.images && product.images.length > 0 ? product.images : ["/placeholder.png"];
+  const lastImage = images[images.length - 1];
 
   // Handle active index updates on swipe
   const handleScroll = () => {
@@ -291,7 +295,11 @@ export default function ProductDetailPage({
               <div className="mt-10 border-t border-black/10 pt-8">
                 <div className="flex items-center justify-between text-[10px] font-medium tracking-[0.2em] uppercase">
                   <span>SELECT SIZE</span>
-                  <button type="button" className="text-black/50 underline underline-offset-4 hover:text-black transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => setShowSizeGuide(true)}
+                    className="text-black/50 underline underline-offset-4 hover:text-black transition-colors cursor-pointer"
+                  >
                     SIZE GUIDE
                   </button>
                 </div>
@@ -516,6 +524,41 @@ export default function ProductDetailPage({
           </section>
         )}
       </main>
+
+      {/* SIZE GUIDE MODAL */}
+      {showSizeGuide && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setShowSizeGuide(false)}
+        >
+          <div
+            className="relative w-full max-w-2xl bg-white p-6 sm:p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-black/10 pb-4 mb-6">
+              <span className="text-[10px] font-medium tracking-[0.25em] uppercase text-black">
+                SIZE GUIDE — {product.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowSizeGuide(false)}
+                className="text-[12px] font-medium tracking-[0.2em] uppercase text-black/60 hover:text-black transition-colors cursor-pointer"
+              >
+                CLOSE ✕
+              </button>
+            </div>
+
+            <div className="relative aspect-[4/5] w-full bg-neutral-50">
+              <Image
+                src={lastImage}
+                alt={`${product.name} Size Guide`}
+                fill
+                className="object-contain p-2"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FLOATING STICKY BOTTOM BAR */}
       <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between border-t border-black/10 bg-white/90 px-6 py-3.5 backdrop-blur-md sm:px-12 transition-all">
