@@ -18,19 +18,54 @@ export default function CheckoutPage() {
     phone: "",
     address: "",
     city: "Dhaka",
+    deliveryType: "standard", // "standard" | "owner"
     notes: "",
     paymentMethod: "cod", // "cod" | "bkash" | "nagad"
     senderPhone: "",
     transactionId: "",
   });
 
-  const shippingFee = formData.city.toLowerCase() === "dhaka" ? 80 : 130;
+  const isDhaka = formData.city.toLowerCase() === "dhaka";
+
+  // Calculate Shipping Fee based on Location and Delivery Type
+  const shippingFee = isDhaka
+    ? formData.deliveryType === "owner"
+      ? 10000
+      : 80
+    : 130;
+
   const grandTotal = cartTotal + shippingFee;
 
   function handleInputChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // Reset deliveryType to standard if location changes to Outside Dhaka
+    if (name === "city" && value !== "Dhaka") {
+      setFormData((prev) => ({
+        ...prev,
+        city: value,
+        deliveryType: "standard",
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  }
+
+  // Handle Delivery Type Selection
+  function handleDeliveryTypeChange(type: "standard" | "owner") {
+    // If Owner delivery is selected, switch payment away from COD if COD is selected
+    const nextPaymentMethod =
+      type === "owner" && formData.paymentMethod === "cod"
+        ? "bkash"
+        : formData.paymentMethod;
+
+    setFormData((prev) => ({
+      ...prev,
+      deliveryType: type,
+      paymentMethod: nextPaymentMethod,
+    }));
   }
 
   async function handleOrderSubmit(e: React.FormEvent) {
@@ -42,6 +77,11 @@ export default function CheckoutPage() {
       (!formData.senderPhone || !formData.transactionId)
     ) {
       alert("Please provide the sender phone number and Transaction ID for digital payments.");
+      return;
+    }
+
+    if (formData.deliveryType === "owner" && formData.paymentMethod === "cod") {
+      alert("Exclusive Owner Delivery requires full advance payment via bKash or Nagad.");
       return;
     }
 
@@ -57,6 +97,7 @@ export default function CheckoutPage() {
           subtotal: cartTotal,
           shippingFee,
           total: grandTotal,
+          deliveryType: formData.deliveryType,
           paymentMethod: formData.paymentMethod,
           paymentDetails: {
             senderPhone: formData.senderPhone,
@@ -153,10 +194,73 @@ export default function CheckoutPage() {
                     onChange={handleInputChange}
                     className="w-full border border-black/20 p-3.5 text-[10px] text-black focus:border-black focus:outline-none uppercase transition-colors"
                   >
-                    <option value="Dhaka">INSIDE DHAKA (৳ 80)</option>
+                    <option value="Dhaka">INSIDE DHAKA</option>
                     <option value="Outside Dhaka">OUTSIDE DHAKA (৳ 130)</option>
                   </select>
                 </div>
+
+                {/* EXCLUSIVE DELIVERY SELECTION (DHAKA ONLY) */}
+                {isDhaka && (
+                  <div className="mt-2 space-y-3 border-t border-black/10 pt-4">
+                    <label className="block text-black/50 text-[9px] tracking-[0.2em]">
+                      SELECT DELIVERY METHOD *
+                    </label>
+                    <div className="grid grid-cols-1 gap-3">
+                      {/* STANDARD DELIVERY */}
+                      <label
+                        onClick={() => handleDeliveryTypeChange("standard")}
+                        className={`border p-4 flex items-center justify-between cursor-pointer transition-all ${
+                          formData.deliveryType === "standard"
+                            ? "border-black bg-neutral-50"
+                            : "border-black/10 hover:border-black/30"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`h-2.5 w-2.5 rounded-full border border-black ${
+                              formData.deliveryType === "standard" ? "bg-black" : "bg-transparent"
+                            }`}
+                          />
+                          <span className="font-medium text-[10px] tracking-[0.2em]">STANDARD DELIVERY</span>
+                        </div>
+                        <span className="text-[10px] font-medium text-black">৳ 80</span>
+                      </label>
+
+                      {/* RASTA OWNER EXCLUSIVE DELIVERY */}
+                      <label
+                        onClick={() => handleDeliveryTypeChange("owner")}
+                        className={`border p-4 flex items-center justify-between cursor-pointer transition-all ${
+                          formData.deliveryType === "owner"
+                            ? "border-black bg-neutral-900 text-white"
+                            : "border-black/20 bg-neutral-50 hover:border-black"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`h-2.5 w-2.5 rounded-full border ${
+                              formData.deliveryType === "owner"
+                                ? "border-white bg-white"
+                                : "border-black bg-transparent"
+                            }`}
+                          />
+                          <div>
+                            <span className="font-bold text-[10px] tracking-[0.2em] block">
+                              EXCLUSIVE DELIVERY BY RASTA OWNER
+                            </span>
+                            <span
+                              className={`text-[8px] tracking-[0.1em] block ${
+                                formData.deliveryType === "owner" ? "text-neutral-400" : "text-black/50"
+                              }`}
+                            >
+                              FULL ADVANCE PAYMENT REQUIRED
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold tracking-[0.1em]">৳ 10,000</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="mb-2 block text-black/50 text-[9px] tracking-[0.2em]">FULL STREET ADDRESS *</label>
@@ -180,18 +284,27 @@ export default function CheckoutPage() {
               </h2>
 
               <div className="grid grid-cols-1 gap-3">
-                {/* CASH ON DELIVERY */}
+                {/* CASH ON DELIVERY (DISABLED IF OWNER DELIVERY IS SELECTED) */}
                 <label
-                  onClick={() => setFormData({ ...formData, paymentMethod: "cod" })}
-                  className={`border p-4 flex items-center justify-between cursor-pointer transition-all ${
-                    formData.paymentMethod === "cod" ? "border-black bg-neutral-50" : "border-black/10 hover:border-black/30"
+                  onClick={() => {
+                    if (formData.deliveryType !== "owner") {
+                      setFormData({ ...formData, paymentMethod: "cod" });
+                    }
+                  }}
+                  className={`border p-4 flex items-center justify-between transition-all ${
+                    formData.deliveryType === "owner"
+                      ? "opacity-40 cursor-not-allowed border-black/10 bg-neutral-100"
+                      : "cursor-pointer " +
+                        (formData.paymentMethod === "cod" ? "border-black bg-neutral-50" : "border-black/10 hover:border-black/30")
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className={`h-2.5 w-2.5 rounded-full border border-black ${formData.paymentMethod === "cod" ? "bg-black" : "bg-transparent"}`} />
                     <span className="font-medium text-[10px] tracking-[0.2em]">CASH ON DELIVERY (COD)</span>
                   </div>
-                  <span className="text-[9px] text-black/40 tracking-[0.15em]">PAY UPON RECEIVING</span>
+                  <span className="text-[9px] text-black/40 tracking-[0.15em]">
+                    {formData.deliveryType === "owner" ? "NOT AVAILABLE FOR OWNER DELIVERY" : "PAY UPON RECEIVING"}
+                  </span>
                 </label>
 
                 {/* BKASH */}
@@ -244,10 +357,21 @@ export default function CheckoutPage() {
                       PAYMENT INSTRUCTIONS ({formData.paymentMethod.toUpperCase()}):
                     </p>
                     <p className="text-black/70 leading-relaxed">
-                      Please send the full amount including delivery charge (<span className="font-bold text-black">৳ {grandTotal.toLocaleString()}</span>) to{" "}
-                      <span className="font-bold text-black">
-                        {formData.paymentMethod === "bkash" ? "01847791140 (bKash)" : "01706379209 (Nagad)"}
-                      </span>.
+                      {formData.deliveryType === "owner" ? (
+                        <>
+                          You selected <span className="font-bold text-black">Exclusive Delivery by RASTA Owner</span>. The full amount including the ৳ 10,000 owner delivery fee (<span className="font-bold text-black">৳ {grandTotal.toLocaleString()}</span>) must be paid in advance to{" "}
+                          <span className="font-bold text-black">
+                            {formData.paymentMethod === "bkash" ? "01847791140 (bKash)" : "01706379209 (Nagad)"}
+                          </span>.
+                        </>
+                      ) : (
+                        <>
+                          Please send the full amount including delivery charge (<span className="font-bold text-black">৳ {grandTotal.toLocaleString()}</span>) to{" "}
+                          <span className="font-bold text-black">
+                            {formData.paymentMethod === "bkash" ? "01847791140 (bKash)" : "01706379209 (Nagad)"}
+                          </span>.
+                        </>
+                      )}
                     </p>
                   </div>
                 )}
@@ -318,7 +442,11 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-black/60">
                   <span>SHIPPING</span>
-                  <span>৳ {shippingFee}</span>
+                  <span>
+                    {formData.deliveryType === "owner"
+                      ? "৳ 10,000 (OWNER)"
+                      : `৳ ${shippingFee}`}
+                  </span>
                 </div>
                 <div className="flex justify-between font-medium text-[11px] text-black pt-3 border-t border-black/10 tracking-[0.15em]">
                   <span>TOTAL</span>
