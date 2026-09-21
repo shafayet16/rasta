@@ -81,6 +81,8 @@ export default function ProductDetailPage({
   const images = product?.images && product.images.length > 0 ? product.images : ["/placeholder.png"];
   const lastImage = images[images.length - 1];
 
+  const isOutOfStock = product?.in_stock === false;
+
   // Handle active index updates on swipe
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
@@ -119,7 +121,7 @@ export default function ProductDetailPage({
   };
 
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product || isOutOfStock) return;
     addToCart({
       productId: product.id,
       name: product.name,
@@ -131,7 +133,7 @@ export default function ProductDetailPage({
   };
 
   const handlePairAddToCart = () => {
-    if (!product || !pairProduct) return;
+    if (!product || !pairProduct || isOutOfStock) return;
     addToCart({
       productId: product.id,
       name: product.name,
@@ -194,6 +196,15 @@ export default function ProductDetailPage({
           <div className="flex flex-col items-center lg:col-span-7 w-full">
             <div className="group relative w-full max-w-[650px]">
               
+              {/* OUT OF STOCK BADGE OVERLAY */}
+              {isOutOfStock && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/40 backdrop-blur-[2px]">
+                  <span className="bg-black px-4 py-2 text-[10px] font-medium tracking-[0.3em] uppercase text-white shadow-md">
+                    OUT OF STOCK
+                  </span>
+                </div>
+              )}
+
               {/* SWIPEABLE GALLERY CONTAINER */}
               <div
                 ref={scrollContainerRef}
@@ -210,7 +221,9 @@ export default function ProductDetailPage({
                       alt={`${product.name} image ${idx + 1}`}
                       fill
                       priority={idx === 0}
-                      className="object-contain object-center mix-blend-multiply transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                      className={`object-contain object-center mix-blend-multiply transition-transform duration-700 ease-out group-hover:scale-[1.02] ${
+                        isOutOfStock ? "opacity-60" : ""
+                      }`}
                     />
                   </div>
                 ))}
@@ -309,11 +322,14 @@ export default function ProductDetailPage({
                     <button
                       key={size}
                       type="button"
+                      disabled={isOutOfStock}
                       onClick={() => setSelectedSize(size)}
-                      className={`flex h-10 w-12 items-center justify-center border text-[10px] transition-all duration-300 cursor-pointer ${
-                        selectedSize === size
-                          ? "border-black bg-black text-white"
-                          : "border-black/20 bg-transparent text-black/60 hover:border-black hover:text-black"
+                      className={`flex h-10 w-12 items-center justify-center border text-[10px] transition-all duration-300 ${
+                        isOutOfStock
+                          ? "border-black/10 text-black/30 cursor-not-allowed"
+                          : selectedSize === size
+                          ? "border-black bg-black text-white cursor-pointer"
+                          : "border-black/20 bg-transparent text-black/60 hover:border-black hover:text-black cursor-pointer"
                       }`}
                     >
                       {size}
@@ -326,13 +342,20 @@ export default function ProductDetailPage({
             {/* ADD TO CART ACTION */}
             <button
               type="button"
+              disabled={isOutOfStock}
               onClick={handleAddToCart}
-              className="group relative mt-8 flex w-full items-center justify-center gap-3 overflow-hidden border border-black bg-black py-4 text-[10px] font-medium tracking-[0.3em] uppercase text-white transition-all duration-300 hover:bg-transparent hover:text-black cursor-pointer"
+              className={`group relative mt-8 flex w-full items-center justify-center gap-3 overflow-hidden border py-4 text-[10px] font-medium tracking-[0.3em] uppercase transition-all duration-300 ${
+                isOutOfStock
+                  ? "border-black/20 bg-black/10 text-black/40 cursor-not-allowed"
+                  : "border-black bg-black text-white hover:bg-transparent hover:text-black cursor-pointer"
+              }`}
             >
-              <svg className="h-4 w-4 fill-current transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
-                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
-              </svg>
-              <span>ADD TO CART</span>
+              {!isOutOfStock && (
+                <svg className="h-4 w-4 fill-current transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
+                  <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+              )}
+              <span>{isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}</span>
             </button>
 
             {/* ANIMATED ACCORDION SECTIONS */}
@@ -472,10 +495,15 @@ export default function ProductDetailPage({
                 </div>
                 <button
                   type="button"
+                  disabled={isOutOfStock}
                   onClick={handlePairAddToCart}
-                  className="mt-5 border border-black bg-transparent px-10 py-3.5 text-[10px] font-medium tracking-[0.3em] uppercase text-black hover:bg-black hover:text-white transition-all duration-300 cursor-pointer"
+                  className={`mt-5 border px-10 py-3.5 text-[10px] font-medium tracking-[0.3em] uppercase transition-all duration-300 ${
+                    isOutOfStock
+                      ? "border-black/20 bg-black/10 text-black/40 cursor-not-allowed"
+                      : "border-black bg-transparent text-black hover:bg-black hover:text-white cursor-pointer"
+                  }`}
                 >
-                  ADD LOOK TO CART
+                  {isOutOfStock ? "ITEM OUT OF STOCK" : "ADD LOOK TO CART"}
                 </button>
               </div>
             </div>
@@ -576,10 +604,15 @@ export default function ProductDetailPage({
           <span className="hidden text-[10px] font-medium tracking-wider sm:inline">{formattedPrice}</span>
           <button
             type="button"
+            disabled={isOutOfStock}
             onClick={handleAddToCart}
-            className="flex items-center gap-2 bg-black px-6 py-2.5 text-[10px] font-medium tracking-[0.25em] uppercase text-white hover:bg-black/80 transition-colors cursor-pointer"
+            className={`flex items-center gap-2 px-6 py-2.5 text-[10px] font-medium tracking-[0.25em] uppercase transition-colors ${
+              isOutOfStock
+                ? "bg-black/20 text-black/50 cursor-not-allowed"
+                : "bg-black text-white hover:bg-black/80 cursor-pointer"
+            }`}
           >
-            <span>ADD TO CART</span>
+            <span>{isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}</span>
           </button>
         </div>
       </div>
