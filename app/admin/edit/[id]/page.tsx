@@ -16,6 +16,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [descriptionLines, setDescriptionLines] = useState<string[]>([""]);
   const [inStock, setInStock] = useState(true);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [disabledSizes, setDisabledSizes] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -37,9 +38,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setPrice(data.price ? String(data.price) : "");
         setInStock(data.in_stock ?? true);
         setSelectedSizes(data.sizes || ["S", "M", "L", "XL"]);
+        setDisabledSizes(data.disabled_sizes || data.disabledSizes || []);
         setExistingImages(data.images || []);
 
-        // Parse description into dynamic one-liner array
         if (data.description) {
           const lines = data.description
             .split("\n")
@@ -58,11 +59,25 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     if (id) fetchProduct();
   }, [id]);
 
+  // Toggle Available Sizes
   function toggleSize(size: string) {
     if (selectedSizes.includes(size)) {
       setSelectedSizes(selectedSizes.filter((s) => s !== size));
     } else {
       setSelectedSizes([...selectedSizes, size]);
+      // Remove from disabled if previously marked unavailable
+      setDisabledSizes(disabledSizes.filter((s) => s !== size));
+    }
+  }
+
+  // Toggle Crossed-Out / Disabled Sizes
+  function toggleDisabledSize(size: string) {
+    if (disabledSizes.includes(size)) {
+      setDisabledSizes(disabledSizes.filter((s) => s !== size));
+    } else {
+      setDisabledSizes([...disabledSizes, size]);
+      // Remove from active sizes if marked crossed-out
+      setSelectedSizes(selectedSizes.filter((s) => s !== size));
     }
   }
 
@@ -123,8 +138,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
-    if (selectedSizes.length === 0) {
-      alert("Please select at least one size.");
+    if (selectedSizes.length === 0 && disabledSizes.length === 0) {
+      alert("Please specify at least one available or disabled size.");
       return;
     }
 
@@ -158,7 +173,6 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         return;
       }
 
-      // Format description into clean one-liner bullet format
       const formattedDescription = descriptionLines
         .map((l) => l.trim())
         .filter(Boolean)
@@ -173,6 +187,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           description: formattedDescription,
           inStock,
           sizes: selectedSizes,
+          disabledSizes: disabledSizes,
           images: finalImages,
         }),
       });
@@ -231,26 +246,55 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             />
           </div>
 
-          <div>
-            <label className="mb-2 block text-black/60">Available Sizes</label>
-            <div className="flex gap-2">
-              {AVAILABLE_SIZES.map((size) => {
-                const isSelected = selectedSizes.includes(size);
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => toggleSize(size)}
-                    className={`h-10 w-12 border text-[10px] font-medium transition-colors ${
-                      isSelected
-                        ? "border-black bg-black text-white"
-                        : "border-black/20 bg-transparent text-black/40 hover:border-black/50"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                );
-              })}
+          {/* SIZES MANAGEMENT */}
+          <div className="space-y-4">
+            <div>
+              <label className="mb-2 block text-black/60">Available Sizes (In Stock)</label>
+              <div className="flex gap-2">
+                {AVAILABLE_SIZES.map((size) => {
+                  const isSelected = selectedSizes.includes(size);
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => toggleSize(size)}
+                      className={`h-10 w-12 border text-[10px] font-medium transition-colors ${
+                        isSelected
+                          ? "border-black bg-black text-white"
+                          : "border-black/20 bg-transparent text-black/40 hover:border-black/50"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-black/60">Crossed-Out Sizes (Out of Stock)</label>
+              <div className="flex gap-2">
+                {AVAILABLE_SIZES.map((size) => {
+                  const isDisabled = disabledSizes.includes(size);
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => toggleDisabledSize(size)}
+                      className={`relative h-10 w-12 border text-[10px] font-medium transition-colors ${
+                        isDisabled
+                          ? "border-red-600 bg-red-50 text-red-600 line-through"
+                          : "border-black/20 bg-transparent text-black/40 hover:border-black/50"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="mt-1 block text-[8px] text-black/40">
+                Crossed-out sizes will appear on product pages with a diagonal strike-through and disabled selection.
+              </span>
             </div>
           </div>
 

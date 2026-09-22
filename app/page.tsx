@@ -7,7 +7,9 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useCart } from "./context/CartContext";
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 interface Product {
   id: string | number;
@@ -16,6 +18,24 @@ interface Product {
   price_formatted?: string;
   images?: string[];
   image?: string;
+}
+
+/* SLEEK SKELETON LOADER GRID FOR HOMEPAGE */
+function HomeSkeletonGrid() {
+  return (
+    <div className="grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 bg-white">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex flex-col text-left animate-pulse">
+          <div className="aspect-[3/4] w-full bg-black/[0.04]" />
+          <div className="mt-4 flex items-center justify-between gap-2">
+            <div className="h-3 w-3/4 bg-black/[0.05]" />
+            <div className="h-3 w-3 bg-black/[0.05]" />
+          </div>
+          <div className="mt-2 h-3 w-1/3 bg-black/[0.03]" />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function Home() {
@@ -29,6 +49,7 @@ export default function Home() {
 
   const { addToCart } = useCart();
 
+  // Fetch product catalog
   useEffect(() => {
     async function fetchProducts() {
       try {
@@ -47,6 +68,17 @@ export default function Home() {
     fetchProducts();
   }, []);
 
+  // Recalculate GSAP ScrollTrigger offsets once catalog loads
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, products]);
+
+  // Hero animations
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
@@ -82,31 +114,33 @@ export default function Home() {
           scrub: true,
         },
       });
-    });
+    }, heroRef);
 
     return () => ctx.revert();
   }, []);
 
+  // Product cards staggered scroll entrance
   useEffect(() => {
     if (loading || products.length === 0) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
         ".product-card",
-        { y: 50, opacity: 0 },
+        { y: 40, opacity: 0 },
         {
           y: 0,
           opacity: 1,
-          duration: 1,
-          stagger: 0.12,
+          duration: 0.8,
+          stagger: 0.08,
           ease: "power3.out",
           scrollTrigger: {
             trigger: shopRef.current,
-            start: "top 80%",
+            start: "top 85%",
+            toggleActions: "play none none none",
           },
         }
       );
-    });
+    }, shopRef);
 
     return () => ctx.revert();
   }, [loading, products]);
@@ -174,9 +208,7 @@ export default function Home() {
       >
         <div className="mx-auto max-w-[1600px] bg-white">
           {loading ? (
-            <div className="py-12 text-center font-mono text-xs uppercase tracking-widest text-black/50">
-              Loading catalog...
-            </div>
+            <HomeSkeletonGrid />
           ) : products.length === 0 ? (
             <div className="py-12 text-center font-mono text-xs uppercase tracking-widest text-black/50">
               No products available.

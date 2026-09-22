@@ -1,12 +1,13 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Navbar from "../components/Navbar"; // Adjust path to your store Navbar
-import Footer from "../components/Footer"; // Adjust path to your store Footer
+import { Suspense } from "react";
+import Navbar from "../components/Navbar"; 
+import Footer from "../components/Footer"; 
 
-export default function NavbarWrapper({ children }: { children: React.ReactNode }) {
+function NavbarWrapperContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith("/admin");
+  const isAdmin = pathname ? pathname.startsWith("/admin") : false;
 
   return (
     <>
@@ -14,5 +15,13 @@ export default function NavbarWrapper({ children }: { children: React.ReactNode 
       {children}
       {!isAdmin && <Footer />}
     </>
+  );
+}
+
+export default function NavbarWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<>{children}</>}>
+      <NavbarWrapperContent>{children}</NavbarWrapperContent>
+    </Suspense>
   );
 }

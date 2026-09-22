@@ -31,18 +31,25 @@ export default function Navbar() {
     if (isSearchOpen && products.length === 0) {
       setLoading(true);
       fetch("/api/products")
-        .then((res) => res.json())
-        .then((data) => setProducts(data))
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed");
+          return res.json();
+        })
+        .then((data) => setProducts(Array.isArray(data) ? data : []))
         .catch((err) => console.error("Failed to load search catalog:", err))
         .finally(() => setLoading(false));
     }
   }, [isSearchOpen, products.length]);
 
-  // Focus & prevent background scrolling
+  // Focus & prevent background scrolling safely
   useEffect(() => {
     if (isSearchOpen) {
       document.body.style.overflow = "hidden";
-      setTimeout(() => searchInputRef.current?.focus(), 100);
+      const timer = setTimeout(() => searchInputRef.current?.focus(), 100);
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = "auto";
+      };
     } else {
       document.body.style.overflow = "auto";
     }

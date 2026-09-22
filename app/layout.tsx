@@ -1,22 +1,53 @@
-import NavbarWrapper from "./components/NavbarWrapper";
-import CartDrawer from "./components/CartDrawer";
-import { CartProvider } from "./context/CartContext"; // Adjust to "@/context/CartContext" if context folder is in project root
-import "./globals.css";
-import { Metadata } from 'next';
+import Script from "next/script";
+import NavbarWrapper from "./components/NavbarWrapper"; // adjust path if needed
+import "@/app/globals.css";
 
-export const metadata: Metadata = {
-  title: 'RASTA',
-  description: 'Explore the Rasta collection.',
+export const metadata = {
+  title: "RASTA",
+  description: "Official RASTA Store",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
+      <head>
+        {/* META PIXEL SCRIPT */}
+        <Script
+          id="meta-pixel"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init', '1966290404066293');
+              fbq('track', 'PageView');
+            `,
+          }}
+        />
+      </head>
       <body>
-        <CartProvider>
-          <NavbarWrapper>{children}</NavbarWrapper>
-          <CartDrawer />
-        </CartProvider>
+        <NavbarWrapper>{children}</NavbarWrapper>
+
+        {/* NOSCRIPT FALLBACK FOR NO-JS BROWSERS */}
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src="https://www.facebook.com/tr?id=1966290404066293&ev=PageView&noscript=1"
+            alt=""
+          />
+        </noscript>
       </body>
     </html>
   );

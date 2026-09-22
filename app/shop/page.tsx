@@ -4,6 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo, useEffect, useRef } from "react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 interface Product {
   id: string | number;
@@ -19,6 +24,24 @@ interface Product {
   inStock?: boolean;
 }
 
+/* SLEEK SKELETON LOADER GRID */
+function ShopSkeletonGrid() {
+  return (
+    <div className="mt-12 grid grid-cols-2 gap-x-8 gap-y-16 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <div key={i} className="flex flex-col text-left animate-pulse">
+          <div className="aspect-square w-full bg-black/[0.04]" />
+          <div className="mt-5 flex items-center justify-between gap-2">
+            <div className="h-3 w-3/4 bg-black/[0.05]" />
+            <div className="h-3 w-3 bg-black/[0.05]" />
+          </div>
+          <div className="mt-2 h-3 w-1/3 bg-black/[0.03]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +53,8 @@ export default function ShopPage() {
   const [showSortMenu, setShowSortMenu] = useState(false);
 
   const gridRef = useRef<HTMLDivElement>(null);
+  const availMenuRef = useRef<HTMLDivElement>(null);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchProducts() {
@@ -68,15 +93,55 @@ export default function ShopPage() {
     return result;
   }, [products, availability, sortBy]);
 
+  /* REFRESH SCROLLTRIGGER ONCE PRODUCTS LOAD & EXPAND PAGE HEIGHT */
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, filteredProducts]);
+
+  /* SMOOTH GRID ENTRANCE TRANSITION */
   useEffect(() => {
     if (gridRef.current && gridRef.current.children.length > 0) {
       gsap.fromTo(
         gridRef.current.children,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: "power2.out" }
+        { opacity: 0, y: 16, scale: 0.98 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.5,
+          stagger: 0.04,
+          ease: "power2.out",
+          clearProps: "transform",
+        }
       );
     }
-  }, [filteredProducts]);
+  }, [filteredProducts, loading]);
+
+  /* SMOOTH DROPDOWN TRANSITIONS */
+  useEffect(() => {
+    if (showAvailabilityMenu && availMenuRef.current) {
+      gsap.fromTo(
+        availMenuRef.current,
+        { opacity: 0, y: -6, scaleY: 0.96 },
+        { opacity: 1, y: 0, scaleY: 1, duration: 0.2, ease: "power2.out" }
+      );
+    }
+  }, [showAvailabilityMenu]);
+
+  useEffect(() => {
+    if (showSortMenu && sortMenuRef.current) {
+      gsap.fromTo(
+        sortMenuRef.current,
+        { opacity: 0, y: -6, scaleY: 0.96 },
+        { opacity: 1, y: 0, scaleY: 1, duration: 0.2, ease: "power2.out" }
+      );
+    }
+  }, [showSortMenu]);
 
   return (
     <main className="min-h-screen bg-white px-6 pt-32 pb-24 sm:px-12">
@@ -96,24 +161,29 @@ export default function ShopPage() {
                 setShowAvailabilityMenu(!showAvailabilityMenu);
                 setShowSortMenu(false);
               }}
-              className="flex items-center gap-2 transition-opacity hover:opacity-60"
+              className="flex items-center gap-2 transition-opacity hover:opacity-60 cursor-pointer"
             >
               <span>
                 AVAILABILITY{" "}
                 {availability !== "all" && `(${availability === "inStock" ? "IN STOCK" : "OUT OF STOCK"})`}
               </span>
-              <span className="text-[9px]">∨</span>
+              <span className={`text-[9px] transition-transform duration-300 ${showAvailabilityMenu ? "rotate-180" : ""}`}>
+                ∨
+              </span>
             </button>
 
             {showAvailabilityMenu && (
-              <div className="absolute left-0 top-8 z-30 flex w-48 flex-col gap-3 border border-black/10 bg-white p-4 shadow-xl">
+              <div
+                ref={availMenuRef}
+                className="absolute left-0 top-8 z-30 flex w-48 origin-top flex-col gap-3 border border-black/10 bg-white p-4 shadow-xl"
+              >
                 <button
                   type="button"
                   onClick={() => {
                     setAvailability("all");
                     setShowAvailabilityMenu(false);
                   }}
-                  className={`text-left text-[10px] tracking-[0.15em] uppercase ${
+                  className={`text-left text-[10px] tracking-[0.15em] uppercase transition-colors ${
                     availability === "all" ? "font-bold text-black" : "text-black/60 hover:text-black"
                   }`}
                 >
@@ -125,7 +195,7 @@ export default function ShopPage() {
                     setAvailability("inStock");
                     setShowAvailabilityMenu(false);
                   }}
-                  className={`text-left text-[10px] tracking-[0.15em] uppercase ${
+                  className={`text-left text-[10px] tracking-[0.15em] uppercase transition-colors ${
                     availability === "inStock" ? "font-bold text-black" : "text-black/60 hover:text-black"
                   }`}
                 >
@@ -137,7 +207,7 @@ export default function ShopPage() {
                     setAvailability("outOfStock");
                     setShowAvailabilityMenu(false);
                   }}
-                  className={`text-left text-[10px] tracking-[0.15em] uppercase ${
+                  className={`text-left text-[10px] tracking-[0.15em] uppercase transition-colors ${
                     availability === "outOfStock" ? "font-bold text-black" : "text-black/60 hover:text-black"
                   }`}
                 >
@@ -158,21 +228,26 @@ export default function ShopPage() {
                   setShowSortMenu(!showSortMenu);
                   setShowAvailabilityMenu(false);
                 }}
-                className="flex items-center gap-2 transition-opacity hover:opacity-60"
+                className="flex items-center gap-2 transition-opacity hover:opacity-60 cursor-pointer"
               >
                 <span>SORT</span>
-                <span className="text-[9px]">∨</span>
+                <span className={`text-[9px] transition-transform duration-300 ${showSortMenu ? "rotate-180" : ""}`}>
+                  ∨
+                </span>
               </button>
 
               {showSortMenu && (
-                <div className="absolute right-0 top-8 z-30 flex w-48 flex-col gap-3 border border-black/10 bg-white p-4 shadow-xl">
+                <div
+                  ref={sortMenuRef}
+                  className="absolute right-0 top-8 z-30 flex w-48 origin-top flex-col gap-3 border border-black/10 bg-white p-4 shadow-xl"
+                >
                   <button
                     type="button"
                     onClick={() => {
                       setSortBy("featured");
                       setShowSortMenu(false);
                     }}
-                    className={`text-left text-[10px] tracking-[0.15em] uppercase ${
+                    className={`text-left text-[10px] tracking-[0.15em] uppercase transition-colors ${
                       sortBy === "featured" ? "font-bold text-black" : "text-black/60 hover:text-black"
                     }`}
                   >
@@ -184,7 +259,7 @@ export default function ShopPage() {
                       setSortBy("priceAsc");
                       setShowSortMenu(false);
                     }}
-                    className={`text-left text-[10px] tracking-[0.15em] uppercase ${
+                    className={`text-left text-[10px] tracking-[0.15em] uppercase transition-colors ${
                       sortBy === "priceAsc" ? "font-bold text-black" : "text-black/60 hover:text-black"
                     }`}
                   >
@@ -196,7 +271,7 @@ export default function ShopPage() {
                       setSortBy("priceDesc");
                       setShowSortMenu(false);
                     }}
-                    className={`text-left text-[10px] tracking-[0.15em] uppercase ${
+                    className={`text-left text-[10px] tracking-[0.15em] uppercase transition-colors ${
                       sortBy === "priceDesc" ? "font-bold text-black" : "text-black/60 hover:text-black"
                     }`}
                   >
@@ -208,13 +283,10 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* LOADING & ERROR STATES */}
-        {loading && (
-          <div className="mt-24 text-center text-[11px] font-medium tracking-[0.2em] uppercase text-black/40">
-            LOADING CATALOG...
-          </div>
-        )}
+        {/* LOADING STATE WITH SKELETON */}
+        {loading && <ShopSkeletonGrid />}
 
+        {/* ERROR STATE */}
         {error && (
           <div className="mt-24 text-center text-[11px] font-medium tracking-[0.2em] uppercase text-red-500">
             {error}
@@ -253,7 +325,7 @@ export default function ShopPage() {
                         alt={product.name}
                         fill
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                        className={`object-contain object-center transition-opacity duration-300 ease-out ${
+                        className={`object-contain object-center transition-all duration-500 ease-out group-hover:scale-105 ${
                           secondImage ? "opacity-100 group-hover:opacity-0" : ""
                         }`}
                       />
@@ -265,7 +337,7 @@ export default function ShopPage() {
                           alt={`${product.name} alternate view`}
                           fill
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                          className="object-contain object-center opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+                          className="object-contain object-center opacity-0 transition-all duration-500 ease-out group-hover:scale-105 group-hover:opacity-100"
                         />
                       )}
 
@@ -286,7 +358,7 @@ export default function ShopPage() {
                     {isAvailable && (
                       <button
                         type="button"
-                        className="text-[14px] leading-none text-black/60 transition-colors hover:text-black"
+                        className="text-[14px] leading-none text-black/60 transition-transform duration-300 hover:scale-125 hover:text-black cursor-pointer"
                         aria-label={`Add ${product.name} to cart`}
                       >
                         +

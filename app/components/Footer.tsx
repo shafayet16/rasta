@@ -4,12 +4,16 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export default function Footer() {
   const footerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!footerRef.current) return;
+
     const ctx = gsap.context(() => {
       gsap.fromTo(
         footerRef.current,
@@ -22,10 +26,13 @@ export default function Footer() {
           scrollTrigger: {
             trigger: footerRef.current,
             start: "top 90%",
+            toggleActions: "play none none none",
           },
         }
       );
-    });
+    }, footerRef);
+
+    ScrollTrigger.refresh();
 
     return () => ctx.revert();
   }, []);

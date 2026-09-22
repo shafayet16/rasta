@@ -79,7 +79,10 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { name, price, description, inStock, sizes, images } = body;
+    const { name, price, description, inStock, sizes, disabledSizes, disabled_sizes, images } = body;
+
+    // Handle both camelCase (disabledSizes) and snake_case (disabled_sizes)
+    const finalDisabledSizes = disabledSizes || disabled_sizes || [];
 
     const numericPrice = parseFloat(price);
     const priceFormatted = `৳ ${numericPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
@@ -92,7 +95,8 @@ export async function PUT(
         price_formatted = ${priceFormatted},
         description = ${description || ""},
         in_stock = ${inStock},
-        sizes = ${sizes},
+        sizes = ${sizes || []},
+        disabled_sizes = ${finalDisabledSizes},
         images = ${images}
       WHERE id::text = ${id} OR slug = ${id}
       RETURNING *;

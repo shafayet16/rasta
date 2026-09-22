@@ -1,16 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "../context/CartContext";
 
+interface CheckoutItem {
+  productId?: string;
+  id?: string;
+  name: string;
+  price: number;
+  image: string;
+  size: string;
+  quantity: number;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isDirect = searchParams.get("direct") === "true";
+
   const { cart, cartTotal, clearCart } = useCart();
 
   const [loading, setLoading] = useState(false);
+  const [checkoutItems, setCheckoutItems] = useState<CheckoutItem[]>([]);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -25,7 +40,32 @@ export default function CheckoutPage() {
     transactionId: "",
   });
 
+  // Load either Direct Buy Item or Cart Items
+  useEffect(() => {
+    if (isDirect) {
+      const directData = localStorage.getItem("direct_checkout");
+      if (directData) {
+        try {
+          const item = JSON.parse(directData);
+          setCheckoutItems([item]);
+        } catch (err) {
+          console.error("Failed to parse direct checkout item", err);
+          setCheckoutItems([]);
+        }
+      }
+    } else {
+      setCheckoutItems(cart);
+    }
+    setIsInitializing(false);
+  }, [isDirect, cart]);
+
   const isDhaka = formData.city.toLowerCase() === "dhaka";
+
+  // Calculate Subtotal dynamically based on active checkout items
+  const subtotal = checkoutItems.reduce(
+    (acc, item) => acc + Number(item.price) * item.quantity,
+    0
+  );
 
   // Calculate Shipping Fee based on Location and Delivery Type
   const shippingFee = isDhaka
@@ -34,14 +74,13 @@ export default function CheckoutPage() {
       : 80
     : 130;
 
-  const grandTotal = cartTotal + shippingFee;
+  const grandTotal = subtotal + shippingFee;
 
   function handleInputChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target;
 
-    // Reset deliveryType to standard if location changes to Outside Dhaka
     if (name === "city" && value !== "Dhaka") {
       setFormData((prev) => ({
         ...prev,
@@ -53,9 +92,7 @@ export default function CheckoutPage() {
     }
   }
 
-  // Handle Delivery Type Selection
   function handleDeliveryTypeChange(type: "standard" | "owner") {
-    // If Owner delivery is selected, switch payment away from COD if COD is selected
     const nextPaymentMethod =
       type === "owner" && formData.paymentMethod === "cod"
         ? "bkash"
@@ -70,7 +107,7 @@ export default function CheckoutPage() {
 
   async function handleOrderSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (cart.length === 0) return;
+    if (checkoutItems.length === 0) return;
 
     if (
       (formData.paymentMethod === "bkash" || formData.paymentMethod === "nagad") &&
@@ -93,8 +130,8 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customer: formData,
-          items: cart,
-          subtotal: cartTotal,
+          items: checkoutItems,
+          subtotal,
           shippingFee,
           total: grandTotal,
           deliveryType: formData.deliveryType,
@@ -109,7 +146,13 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to place order");
 
-      clearCart();
+      // Cleanup
+      if (isDirect) {
+        localStorage.removeItem("direct_checkout");
+      } else {
+        clearCart();
+      }
+
       router.push(`/checkout/success?orderId=${data.orderId}`);
     } catch (err: any) {
       alert(err.message || "Something went wrong.");
@@ -118,7 +161,15 @@ export default function CheckoutPage() {
     }
   }
 
-  if (cart.length === 0) {
+  if (isInitializing) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white text-[10px] font-medium tracking-[0.3em] uppercase text-black/40">
+        LOADING CHECKOUT...
+      </div>
+    );
+  }
+
+  if (checkoutItems.length === 0) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-white text-black">
         <p className="text-[11px] tracking-[0.25em] uppercase text-black/60">
@@ -138,7 +189,7 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white pt-24 sm:pt-32 pb-32 sm:pb-24 px-4 sm:px-8 lg:px-16">
       <main className="mx-auto max-w-[1400px]">
         <h1 className="border-b border-black/10 pb-5 text-[10px] sm:text-[11px] font-medium tracking-[0.25em] uppercase text-black">
-          CHECKOUT
+          CHECKOUT {isDirect ? "(EXPRESS BUY NOW)" : ""}
         </h1>
 
         <form onSubmit={handleOrderSubmit} className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16 items-start">
@@ -348,7 +399,7 @@ export default function CheckoutPage() {
                       <span className="font-bold text-black">৳ {shippingFee}</span> via bKash (
                       <span className="font-mono text-black font-semibold">01847791140</span>) or Nagad (
                       <span className="font-mono text-black font-semibold">01706379209</span>). The remaining product amount of{" "}
-                      <span className="font-bold text-black">৳ {cartTotal.toLocaleString()}</span> will be collected at delivery.
+                      <span className="font-bold text-black">৳ {subtotal.toLocaleString()}</span> will be collected at delivery.
                     </p>
                   </div>
                 ) : (
@@ -419,8 +470,8 @@ export default function CheckoutPage() {
               </h2>
 
               <div className="mt-6 flex flex-col gap-4 max-h-[280px] overflow-y-auto pr-2 divide-y divide-black/5">
-                {cart.map((item) => (
-                  <div key={item.id} className="pt-4 first:pt-0 flex justify-between items-center text-[10px] tracking-wider uppercase">
+                {checkoutItems.map((item, idx) => (
+                  <div key={item.id || item.productId || idx} className="pt-4 first:pt-0 flex justify-between items-center text-[10px] tracking-wider uppercase">
                     <div className="flex items-center gap-4">
                       <div className="relative h-14 w-11 shrink-0 bg-white border border-black/10">
                         <Image src={item.image || "/placeholder.png"} alt={item.name} fill className="object-contain p-1" />
@@ -438,7 +489,7 @@ export default function CheckoutPage() {
               <div className="mt-6 border-t border-black/10 pt-4 flex flex-col gap-3 text-[10px] tracking-wider uppercase">
                 <div className="flex justify-between text-black/60">
                   <span>SUBTOTAL</span>
-                  <span>৳ {cartTotal.toLocaleString()}</span>
+                  <span>৳ {subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-black/60">
                   <span>SHIPPING</span>
