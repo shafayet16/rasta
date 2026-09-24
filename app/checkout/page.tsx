@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,7 +16,7 @@ interface CheckoutItem {
   quantity: number;
 }
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isDirect = searchParams.get("direct") === "true";
@@ -528,5 +528,19 @@ export default function CheckoutPage() {
         </form>
       </main>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-white text-[10px] font-medium tracking-[0.3em] uppercase text-black/40">
+          LOADING CHECKOUT...
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }
