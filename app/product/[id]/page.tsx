@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, use, useRef } from "react";
 import { useCart } from "../../context/CartContext";
 import { ProductDetailSkeleton } from "../../components/Loaders";
+import { event as trackPixelEvent } from "@/lib/fpixel";
 
 interface Product {
   id: string;
@@ -59,6 +60,15 @@ export default function ProductDetailPage({
         if (!res.ok) throw new Error("Product not found");
         const data: Product = await res.json();
         setProduct(data);
+
+        // Track Meta Pixel: ViewContent
+        trackPixelEvent("ViewContent", {
+          content_name: data.name,
+          content_ids: [data.id],
+          content_type: "product",
+          value: Number(data.price),
+          currency: "BDT",
+        });
 
         // Normalize crossed out / disabled sizes
         const disabled = data.disabledSizes || data.disabled_sizes || [];
@@ -138,6 +148,16 @@ export default function ProductDetailPage({
 
   const handleAddToCart = () => {
     if (!product || isOutOfStock) return;
+
+    // Track Meta Pixel: AddToCart
+    trackPixelEvent("AddToCart", {
+      content_name: product.name,
+      content_ids: [product.id],
+      content_type: "product",
+      value: Number(product.price),
+      currency: "BDT",
+    });
+
     addToCart({
       productId: product.id,
       name: product.name,
@@ -150,6 +170,15 @@ export default function ProductDetailPage({
 
   const handleBuyNow = () => {
     if (!product || isOutOfStock) return;
+
+    // Track Meta Pixel: InitiateCheckout
+    trackPixelEvent("InitiateCheckout", {
+      content_name: product.name,
+      content_ids: [product.id],
+      content_type: "product",
+      value: Number(product.price),
+      currency: "BDT",
+    });
 
     const directCheckoutItem = {
       productId: product.id,
@@ -166,6 +195,18 @@ export default function ProductDetailPage({
 
   const handlePairAddToCart = () => {
     if (!product || !pairProduct || isOutOfStock) return;
+
+    const bundleValue = Number(product.price) + Number(pairProduct.price);
+
+    // Track Meta Pixel: AddToCart (Lookbook Bundle)
+    trackPixelEvent("AddToCart", {
+      content_name: `${product.name} + ${pairProduct.name}`,
+      content_ids: [product.id, pairProduct.id],
+      content_type: "product",
+      value: bundleValue,
+      currency: "BDT",
+    });
+
     addToCart({
       productId: product.id,
       name: product.name,
