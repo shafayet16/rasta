@@ -9,6 +9,16 @@ import { event as trackPixelEvent } from "@/lib/fpixel";
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") || "ORD-000000";
+
+  // Parse order total value dynamically from URL params
+  const rawAmount =
+    searchParams.get("amount") ||
+    searchParams.get("total") ||
+    searchParams.get("value") ||
+    searchParams.get("price") ||
+    "0";
+  const orderValue = Number(rawAmount);
+
   const { clearCart } = useCart();
   const hasCleared = useRef(false);
   const hasTrackedPixel = useRef(false);
@@ -27,12 +37,12 @@ function SuccessContent() {
       trackPixelEvent("Purchase", {
         content_type: "product",
         currency: "BDT",
-        value: 0, // Optionally pass order amount if passed in searchParams
+        value: orderValue,
         order_id: orderId,
       });
       hasTrackedPixel.current = true;
     }
-  }, [orderId]);
+  }, [orderId, orderValue]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(orderId);
