@@ -10,15 +10,6 @@ function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") || "ORD-000000";
 
-  // Parse order total value dynamically from URL params
-  const rawAmount =
-    searchParams.get("amount") ||
-    searchParams.get("total") ||
-    searchParams.get("value") ||
-    searchParams.get("price") ||
-    "0";
-  const orderValue = Number(rawAmount);
-
   const { clearCart } = useCart();
   const hasCleared = useRef(false);
   const hasTrackedPixel = useRef(false);
@@ -31,18 +22,23 @@ function SuccessContent() {
     }
   }, [clearCart]);
 
-  // Track Meta Pixel Purchase Event
+  // Track Meta Pixel Purchase Event with dynamic value from localStorage
   useEffect(() => {
     if (orderId && orderId !== "ORD-000000" && !hasTrackedPixel.current) {
+      const savedAmount = localStorage.getItem("latest_order_total");
+      const orderValue = savedAmount ? Number(savedAmount) : 0;
+
       trackPixelEvent("Purchase", {
         content_type: "product",
         currency: "BDT",
         value: orderValue,
         order_id: orderId,
       });
+
       hasTrackedPixel.current = true;
+      localStorage.removeItem("latest_order_total"); // Clear after tracking
     }
-  }, [orderId, orderValue]);
+  }, [orderId]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(orderId);
