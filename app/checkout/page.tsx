@@ -160,6 +160,9 @@ function CheckoutContent() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to place order");
 
+      // Save order total to localStorage for the success page Meta Pixel Purchase event
+      localStorage.setItem("latest_order_total", grandTotal.toString());
+
       // Cleanup
       if (isDirect) {
         localStorage.removeItem("direct_checkout");
