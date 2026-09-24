@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { event as trackPixelEvent } from "@/lib/fpixel";
 
 export interface CartItem {
   id: string; // unique ID based on product ID + size
@@ -61,6 +62,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return [...prev, { ...newItem, id: itemId }];
     });
     setIsOpen(true);
+
+    // Track Meta Pixel AddToCart Event
+    trackPixelEvent("AddToCart", {
+      content_name: newItem.name,
+      content_ids: [newItem.productId],
+      content_type: "product",
+      value: newItem.price * newItem.quantity,
+      currency: "BDT",
+    });
   }
 
   function removeFromCart(id: string) {

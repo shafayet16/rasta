@@ -4,12 +4,14 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "../../context/CartContext";
+import { event as trackPixelEvent } from "@/lib/fpixel";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") || "ORD-000000";
   const { clearCart } = useCart();
   const hasCleared = useRef(false);
+  const hasTrackedPixel = useRef(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -18,6 +20,19 @@ function SuccessContent() {
       hasCleared.current = true;
     }
   }, [clearCart]);
+
+  // Track Meta Pixel Purchase Event
+  useEffect(() => {
+    if (orderId && orderId !== "ORD-000000" && !hasTrackedPixel.current) {
+      trackPixelEvent("Purchase", {
+        content_type: "product",
+        currency: "BDT",
+        value: 0, // Optionally pass order amount if passed in searchParams
+        order_id: orderId,
+      });
+      hasTrackedPixel.current = true;
+    }
+  }, [orderId]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(orderId);

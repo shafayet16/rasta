@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "../context/CartContext";
+import { event as trackPixelEvent } from "@/lib/fpixel";
 
 interface CheckoutItem {
   productId?: string;
@@ -75,6 +76,19 @@ function CheckoutContent() {
     : 130;
 
   const grandTotal = subtotal + shippingFee;
+
+  // Track Meta Pixel InitiateCheckout Event once items are ready
+  useEffect(() => {
+    if (!isInitializing && checkoutItems.length > 0) {
+      trackPixelEvent("InitiateCheckout", {
+        content_ids: checkoutItems.map((item) => item.productId || item.id),
+        content_type: "product",
+        num_items: checkoutItems.reduce((acc, item) => acc + item.quantity, 0),
+        value: grandTotal,
+        currency: "BDT",
+      });
+    }
+  }, [isInitializing, checkoutItems.length, grandTotal]);
 
   function handleInputChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>

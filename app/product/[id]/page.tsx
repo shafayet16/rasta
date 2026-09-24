@@ -640,27 +640,41 @@ export default function ProductDetailPage({
             )}
 
             {/* FLOATING STICKY BOTTOM BAR */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between border-t border-black/10 bg-white/90 px-6 py-3.5 backdrop-blur-md sm:px-12 transition-all">
-              <div className="flex items-center gap-4">
-                <div className="relative h-10 w-10 overflow-hidden bg-transparent">
+            <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between border-t border-black/10 bg-white/90 px-4 py-3 backdrop-blur-md sm:px-12 transition-all">
+              <div className="flex items-center gap-3 sm:gap-4 truncate mr-2">
+                <div className="relative h-9 w-9 shrink-0 overflow-hidden bg-transparent">
                   <Image src={images[0]} alt={product.name} fill className="object-contain mix-blend-multiply" />
                 </div>
-                <div>
-                  <p className="text-[10px] font-medium tracking-widest uppercase">{product.name}</p>
+                <div className="truncate">
+                  <p className="text-[10px] font-medium tracking-widest uppercase truncate">{product.name}</p>
                   <p className="text-[9px] text-black/40 uppercase">{selectedSize}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="hidden text-[10px] font-medium tracking-wider sm:inline mr-3">{formattedPrice}</span>
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                <span className="hidden text-[10px] font-medium tracking-wider md:inline mr-2">{formattedPrice}</span>
+                
+                <button
+                  type="button"
+                  disabled={isOutOfStock}
+                  onClick={handleAddToCart}
+                  className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-medium tracking-[0.2em] uppercase border transition-colors ${
+                    isOutOfStock
+                      ? "border-black/20 bg-black/10 text-black/40 cursor-not-allowed"
+                      : "border-black/30 bg-transparent text-black hover:border-black cursor-pointer"
+                  }`}
+                >
+                  <span>{isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}</span>
+                </button>
+
                 <button
                   type="button"
                   disabled={isOutOfStock}
                   onClick={handleBuyNow}
-                  className={`flex items-center gap-2 px-5 py-2 text-[10px] font-medium tracking-[0.25em] uppercase transition-colors ${
+                  className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-medium tracking-[0.2em] uppercase border transition-colors ${
                     isOutOfStock
-                      ? "bg-black/20 text-black/50 cursor-not-allowed"
-                      : "bg-black text-white hover:bg-black/80 cursor-pointer"
+                      ? "border-black/20 bg-black/10 text-black/40 cursor-not-allowed"
+                      : "border-black bg-black text-white hover:bg-black/80 cursor-pointer"
                   }`}
                 >
                   <span>{isOutOfStock ? "OUT OF STOCK" : "CHECKOUT"}</span>
