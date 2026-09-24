@@ -1,5 +1,8 @@
 import Script from "next/script";
-import NavbarWrapper from "./components/NavbarWrapper"; // adjust path if needed
+import { Suspense } from "react";
+import NavbarWrapper from "./components/NavbarWrapper";
+import PixelEvents from "./components/PixelEvents";
+import { CartProvider } from "./context/CartContext";
 import "@/app/globals.css";
 
 export const metadata = {
@@ -36,7 +39,12 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <NavbarWrapper>{children}</NavbarWrapper>
+        <CartProvider>
+          <Suspense fallback={null}>
+            <PixelEvents />
+          </Suspense>
+          <NavbarWrapper>{children}</NavbarWrapper>
+        </CartProvider>
 
         {/* NOSCRIPT FALLBACK FOR NO-JS BROWSERS */}
         <noscript>
