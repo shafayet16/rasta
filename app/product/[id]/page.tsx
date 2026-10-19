@@ -109,12 +109,14 @@ export default function ProductDetailPage({
   // Combine sizes to ensure crossed-out ones display correctly
   const allSizes = Array.from(new Set([...(product?.sizes || []), ...disabledSizes]));
 
-  // Handle active index updates on swipe
+  // Ultra-smooth scroll index tracker
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
-    const width = scrollContainerRef.current.offsetWidth;
+    const container = scrollContainerRef.current;
+    const width = container.offsetWidth;
     if (width > 0) {
-      const newIndex = Math.round(scrollContainerRef.current.scrollLeft / width);
+      const scrollPosition = container.scrollLeft;
+      const newIndex = Math.round(scrollPosition / width);
       if (newIndex !== currentImgIndex && newIndex >= 0 && newIndex < images.length) {
         setCurrentImgIndex(newIndex);
       }
@@ -277,7 +279,7 @@ export default function ProductDetailPage({
             <main className="mx-auto max-w-[1600px] px-6 pt-28 pb-24 sm:px-12">
               <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
                 
-                {/* LEFT: GALLERY & CAROUSEL */}
+                {/* LEFT: GALLERY & BUTTERY-SMOOTH CAROUSEL */}
                 <div className="flex flex-col items-center lg:col-span-7 w-full">
                   <div className="group relative w-full max-w-[650px]">
                     
@@ -289,21 +291,24 @@ export default function ProductDetailPage({
                       </div>
                     )}
 
+                    {/* Smooth mobile momentum slider */}
                     <div
                       ref={scrollContainerRef}
                       onScroll={handleScroll}
-                      className="flex aspect-[4/5] w-full overflow-x-auto snap-x snap-mandatory bg-transparent [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                      className="flex aspect-[4/5] w-full overflow-x-auto snap-x snap-mandatory touch-pan-x bg-transparent [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth"
+                      style={{ WebkitOverflowScrolling: "touch" }}
                     >
                       {images.map((img, idx) => (
                         <div
                           key={idx}
-                          className="relative h-full w-full shrink-0 snap-center"
+                          className="relative h-full w-full shrink-0 snap-center select-none"
                         >
                           <Image
                             src={img}
                             alt={`${product.name} image ${idx + 1}`}
                             fill
                             priority={idx === 0}
+                            sizes="(max-width: 1024px) 100vw, 650px"
                             className={`object-contain object-center mix-blend-multiply transition-transform duration-700 ease-out group-hover:scale-[1.02] ${
                               isOutOfStock ? "opacity-60" : ""
                             }`}
@@ -694,31 +699,17 @@ export default function ProductDetailPage({
 
               <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                 <span className="hidden text-[10px] font-medium tracking-wider md:inline mr-2">{formattedPrice}</span>
-                
-                <button
-                  type="button"
-                  disabled={isOutOfStock}
-                  onClick={handleAddToCart}
-                  className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-medium tracking-[0.2em] uppercase border transition-colors ${
-                    isOutOfStock
-                      ? "border-black/20 bg-black/10 text-black/40 cursor-not-allowed"
-                      : "border-black/30 bg-transparent text-black hover:border-black cursor-pointer"
-                  }`}
-                >
-                  <span>{isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}</span>
-                </button>
-
                 <button
                   type="button"
                   disabled={isOutOfStock}
                   onClick={handleBuyNow}
-                  className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-medium tracking-[0.2em] uppercase border transition-colors ${
+                  className={`border px-5 py-2.5 text-[9px] font-medium tracking-[0.25em] uppercase transition-all duration-300 ${
                     isOutOfStock
                       ? "border-black/20 bg-black/10 text-black/40 cursor-not-allowed"
                       : "border-black bg-black text-white hover:bg-black/80 cursor-pointer"
                   }`}
                 >
-                  <span>{isOutOfStock ? "OUT OF STOCK" : "CHECKOUT"}</span>
+                  {isOutOfStock ? "OUT OF STOCK" : "CHECKOUT"}
                 </button>
               </div>
             </div>
