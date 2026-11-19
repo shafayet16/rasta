@@ -61,6 +61,13 @@ function CheckoutContent() {
   }, [isDirect, cart]);
 
   const isDhaka = formData.city.toLowerCase() === "dhaka";
+  const isStandardDhakaCod =
+    isDhaka && formData.deliveryType === "standard" && formData.paymentMethod === "cod";
+  const requiresAdvancePayment =
+    formData.paymentMethod === "bkash" ||
+    formData.paymentMethod === "nagad" ||
+    formData.deliveryType === "owner" ||
+    !isDhaka;
 
   // Calculate Subtotal dynamically based on active checkout items
   const subtotal = checkoutItems.reduce(
@@ -124,10 +131,10 @@ function CheckoutContent() {
     if (checkoutItems.length === 0) return;
 
     if (
-      (formData.paymentMethod === "bkash" || formData.paymentMethod === "nagad") &&
-      (!formData.senderPhone || !formData.transactionId)
+      requiresAdvancePayment &&
+      (!formData.senderPhone.trim() || !formData.transactionId.trim())
     ) {
-      alert("Please provide the sender phone number and Transaction ID for digital payments.");
+      alert("Please provide the sender phone number and Transaction ID for advance/digital payments.");
       return;
     }
 
@@ -150,10 +157,12 @@ function CheckoutContent() {
           total: grandTotal,
           deliveryType: formData.deliveryType,
           paymentMethod: formData.paymentMethod,
-          paymentDetails: {
-            senderPhone: formData.senderPhone,
-            transactionId: formData.transactionId,
-          },
+          paymentDetails: requiresAdvancePayment
+            ? {
+                senderPhone: formData.senderPhone,
+                transactionId: formData.transactionId,
+              }
+            : null,
         }),
       });
 
@@ -214,7 +223,7 @@ function CheckoutContent() {
           <div className="flex flex-col gap-10 text-[10px] tracking-wider uppercase lg:col-span-7">
             <div>
               <h2 className="mb-6 text-[10px] font-medium tracking-[0.25em] text-black border-b border-black/10 pb-3">
-                1. SHIPPING DETAILS
+1. SHIPPING DETAILS
               </h2>
               <div className="grid grid-cols-1 gap-5">
                 <div>
@@ -262,7 +271,7 @@ function CheckoutContent() {
                     onChange={handleInputChange}
                     className="w-full border border-black/20 p-3.5 text-[10px] text-black focus:border-black focus:outline-none uppercase transition-colors"
                   >
-                    <option value="Dhaka">INSIDE DHAKA</option>
+                    <option value="Dhaka">INSIDE DHAKA (NO ADVANCE DELIVERY NEEDED)</option>
                     <option value="Outside Dhaka">OUTSIDE DHAKA (৳ 130)</option>
                   </select>
                 </div>
@@ -348,7 +357,7 @@ function CheckoutContent() {
             {/* PAYMENT METHOD */}
             <div className="pt-2">
               <h2 className="mb-6 text-[10px] font-medium tracking-[0.25em] text-black border-b border-black/10 pb-3">
-                2. PAYMENT METHOD
+2. PAYMENT METHOD
               </h2>
 
               <div className="grid grid-cols-1 gap-3">
@@ -371,7 +380,11 @@ function CheckoutContent() {
                     <span className="font-medium text-[10px] tracking-[0.2em]">CASH ON DELIVERY (COD)</span>
                   </div>
                   <span className="text-[9px] text-black/40 tracking-[0.15em]">
-                    {formData.deliveryType === "owner" ? "NOT AVAILABLE FOR OWNER DELIVERY" : "PAY UPON RECEIVING"}
+                    {formData.deliveryType === "owner"
+                      ? "NOT AVAILABLE FOR OWNER DELIVERY"
+                      : isDhaka
+                      ? "NO ADVANCE DELIVERY NEEDED"
+                      : "ADVANCE DELIVERY CHARGE"}
                   </span>
                 </label>
 
@@ -406,13 +419,24 @@ function CheckoutContent() {
 
               {/* DYNAMIC PAYMENT INSTRUCTION PANEL */}
               <div className="mt-6 border border-black/20 p-5 bg-neutral-50 text-[10px] normal-case tracking-normal">
-                {formData.paymentMethod === "cod" ? (
+                {isStandardDhakaCod ? (
                   <div className="space-y-2">
                     <p className="font-medium uppercase tracking-[0.15em] text-black">
-                      ORDER CONFIRMATION REQUIREMENT:
+                      INSIDE DHAKA CASH ON DELIVERY:
                     </p>
                     <p className="text-black/70 leading-relaxed">
-                      To confirm your Cash on Delivery order, please send the delivery charge of{" "}
+                      No advance delivery payment via bKash or Nagad is required for standard orders inside Dhaka. You can pay the full total of{" "}
+                      <span className="font-bold text-black">৳ {grandTotal.toLocaleString()}</span> (including{" "}
+                      <span className="font-bold text-black">৳ {shippingFee}</span> delivery) when your order arrives.
+                    </p>
+                  </div>
+                ) : formData.paymentMethod === "cod" ? (
+                  <div className="space-y-2">
+                    <p className="font-medium uppercase tracking-[0.15em] text-black">
+                      OUTSIDE DHAKA ORDER CONFIRMATION REQUIREMENT:
+                    </p>
+                    <p className="text-black/70 leading-relaxed">
+                      To confirm your Cash on Delivery order outside Dhaka, please send the delivery charge of{" "}
                       <span className="font-bold text-black">৳ {shippingFee}</span> via bKash (
                       <span className="font-mono text-black font-semibold">01847791140</span>) or Nagad (
                       <span className="font-mono text-black font-semibold">01706379209</span>). The remaining product amount of{" "}
@@ -444,37 +468,39 @@ function CheckoutContent() {
                   </div>
                 )}
 
-                {/* TRANSACTION VERIFICATION INPUTS */}
-                <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 border-t border-black/10 pt-4">
-                  <div>
-                    <label className="mb-1.5 block text-black/60 text-[9px] tracking-[0.15em] uppercase font-medium">
-                      SENDER PHONE NUMBER *
-                    </label>
-                    <input
-                      type="tel"
-                      name="senderPhone"
-                      required
-                      placeholder="01XXXXXXXXX"
-                      value={formData.senderPhone}
-                      onChange={handleInputChange}
-                      className="w-full border border-black/20 p-3 text-[11px] text-black focus:border-black focus:outline-none bg-white transition-colors"
-                    />
+                {/* TRANSACTION VERIFICATION INPUTS (ONLY WHEN ADVANCE / DIGITAL PAYMENT APPLIES) */}
+                {requiresAdvancePayment && (
+                  <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 border-t border-black/10 pt-4">
+                    <div>
+                      <label className="mb-1.5 block text-black/60 text-[9px] tracking-[0.15em] uppercase font-medium">
+                        SENDER PHONE NUMBER *
+                      </label>
+                      <input
+                        type="tel"
+                        name="senderPhone"
+                        required={requiresAdvancePayment}
+                        placeholder="01XXXXXXXXX"
+                        value={formData.senderPhone}
+                        onChange={handleInputChange}
+                        className="w-full border border-black/20 p-3 text-[11px] text-black focus:border-black focus:outline-none bg-white transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-black/60 text-[9px] tracking-[0.15em] uppercase font-medium">
+                        TRANSACTION ID (TRXID) *
+                      </label>
+                      <input
+                        type="text"
+                        name="transactionId"
+                        required={requiresAdvancePayment}
+                        placeholder="e.g. BXA8923JK"
+                        value={formData.transactionId}
+                        onChange={handleInputChange}
+                        className="w-full border border-black/20 p-3 text-[11px] text-black focus:border-black focus:outline-none uppercase bg-white transition-colors"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="mb-1.5 block text-black/60 text-[9px] tracking-[0.15em] uppercase font-medium">
-                      TRANSACTION ID (TRXID) *
-                    </label>
-                    <input
-                      type="text"
-                      name="transactionId"
-                      required
-                      placeholder="e.g. BXA8923JK"
-                      value={formData.transactionId}
-                      onChange={handleInputChange}
-                      className="w-full border border-black/20 p-3 text-[11px] text-black focus:border-black focus:outline-none uppercase bg-white transition-colors"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
