@@ -61,13 +61,6 @@ function CheckoutContent() {
   }, [isDirect, cart]);
 
   const isDhaka = formData.city.toLowerCase() === "dhaka";
-  const isStandardDhakaCod =
-    isDhaka && formData.deliveryType === "standard" && formData.paymentMethod === "cod";
-  const requiresAdvancePayment =
-    formData.paymentMethod === "bkash" ||
-    formData.paymentMethod === "nagad" ||
-    formData.deliveryType === "owner" ||
-    !isDhaka;
 
   // Calculate Subtotal dynamically based on active checkout items
   const subtotal = checkoutItems.reduce(
@@ -131,10 +124,11 @@ function CheckoutContent() {
     if (checkoutItems.length === 0) return;
 
     if (
-      requiresAdvancePayment &&
-      (!formData.senderPhone.trim() || !formData.transactionId.trim())
+      !isDhaka &&
+      (formData.paymentMethod === "bkash" || formData.paymentMethod === "nagad") &&
+      (!formData.senderPhone || !formData.transactionId)
     ) {
-      alert("Please provide the sender phone number and Transaction ID for advance/digital payments.");
+      alert("Please provide the sender phone number and Transaction ID for digital payments.");
       return;
     }
 
@@ -157,7 +151,7 @@ function CheckoutContent() {
           total: grandTotal,
           deliveryType: formData.deliveryType,
           paymentMethod: formData.paymentMethod,
-          paymentDetails: requiresAdvancePayment
+          paymentDetails: !isDhaka
             ? {
                 senderPhone: formData.senderPhone,
                 transactionId: formData.transactionId,
@@ -271,7 +265,7 @@ function CheckoutContent() {
                     onChange={handleInputChange}
                     className="w-full border border-black/20 p-3.5 text-[10px] text-black focus:border-black focus:outline-none uppercase transition-colors"
                   >
-                    <option value="Dhaka">INSIDE DHAKA (NO ADVANCE DELIVERY NEEDED)</option>
+                    <option value="Dhaka">INSIDE DHAKA</option>
                     <option value="Outside Dhaka">OUTSIDE DHAKA (৳ 130)</option>
                   </select>
                 </div>
@@ -380,11 +374,7 @@ function CheckoutContent() {
                     <span className="font-medium text-[10px] tracking-[0.2em]">CASH ON DELIVERY (COD)</span>
                   </div>
                   <span className="text-[9px] text-black/40 tracking-[0.15em]">
-                    {formData.deliveryType === "owner"
-                      ? "NOT AVAILABLE FOR OWNER DELIVERY"
-                      : isDhaka
-                      ? "NO ADVANCE DELIVERY NEEDED"
-                      : "ADVANCE DELIVERY CHARGE"}
+                    {formData.deliveryType === "owner" ? "NOT AVAILABLE FOR OWNER DELIVERY" : "PAY UPON RECEIVING"}
                   </span>
                 </label>
 
@@ -417,59 +407,37 @@ function CheckoutContent() {
                 </label>
               </div>
 
-              {/* DYNAMIC PAYMENT INSTRUCTION PANEL */}
-              <div className="mt-6 border border-black/20 p-5 bg-neutral-50 text-[10px] normal-case tracking-normal">
-                {isStandardDhakaCod ? (
-                  <div className="space-y-2">
-                    <p className="font-medium uppercase tracking-[0.15em] text-black">
-                      INSIDE DHAKA CASH ON DELIVERY:
-                    </p>
-                    <p className="text-black/70 leading-relaxed">
-                      No advance delivery payment via bKash or Nagad is required for standard orders inside Dhaka. You can pay the full total of{" "}
-                      <span className="font-bold text-black">৳ {grandTotal.toLocaleString()}</span> (including{" "}
-                      <span className="font-bold text-black">৳ {shippingFee}</span> delivery) when your order arrives.
-                    </p>
-                  </div>
-                ) : formData.paymentMethod === "cod" ? (
-                  <div className="space-y-2">
-                    <p className="font-medium uppercase tracking-[0.15em] text-black">
-                      OUTSIDE DHAKA ORDER CONFIRMATION REQUIREMENT:
-                    </p>
-                    <p className="text-black/70 leading-relaxed">
-                      To confirm your Cash on Delivery order outside Dhaka, please send the delivery charge of{" "}
-                      <span className="font-bold text-black">৳ {shippingFee}</span> via bKash (
-                      <span className="font-mono text-black font-semibold">01847791140</span>) or Nagad (
-                      <span className="font-mono text-black font-semibold">01706379209</span>). The remaining product amount of{" "}
-                      <span className="font-bold text-black">৳ {subtotal.toLocaleString()}</span> will be collected at delivery.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="font-medium uppercase tracking-[0.15em] text-black">
-                      PAYMENT INSTRUCTIONS ({formData.paymentMethod.toUpperCase()}):
-                    </p>
-                    <p className="text-black/70 leading-relaxed">
-                      {formData.deliveryType === "owner" ? (
-                        <>
-                          You selected <span className="font-bold text-black">Exclusive Delivery by RASTA Owner</span>. The full amount including the ৳ 10,000 owner delivery fee (<span className="font-bold text-black">৳ {grandTotal.toLocaleString()}</span>) must be paid in advance to{" "}
-                          <span className="font-bold text-black">
-                            {formData.paymentMethod === "bkash" ? "01847791140 (bKash)" : "01706379209 (Nagad)"}
-                          </span>.
-                        </>
-                      ) : (
-                        <>
-                          Please send the full amount including delivery charge (<span className="font-bold text-black">৳ {grandTotal.toLocaleString()}</span>) to{" "}
-                          <span className="font-bold text-black">
-                            {formData.paymentMethod === "bkash" ? "01847791140 (bKash)" : "01706379209 (Nagad)"}
-                          </span>.
-                        </>
-                      )}
-                    </p>
-                  </div>
-                )}
+              {/* ADVANCE PAYMENT BLOCK (ONLY WHEN OUTSIDE DHAKA) */}
+              {!isDhaka && (
+                <div className="mt-6 border border-black/20 p-5 bg-neutral-50 text-[10px] normal-case tracking-normal">
+                  {formData.paymentMethod === "cod" ? (
+                    <div className="space-y-2">
+                      <p className="font-medium uppercase tracking-[0.15em] text-black">
+                        ORDER CONFIRMATION REQUIREMENT:
+                      </p>
+                      <p className="text-black/70 leading-relaxed">
+                        To confirm your Cash on Delivery order, please send the delivery charge of{" "}
+                        <span className="font-bold text-black">৳ {shippingFee}</span> via bKash (
+                        <span className="font-mono text-black font-semibold">01847791140</span>) or Nagad (
+                        <span className="font-mono text-black font-semibold">01706379209</span>). The remaining product amount of{" "}
+                        <span className="font-bold text-black">৳ {subtotal.toLocaleString()}</span> will be collected at delivery.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="font-medium uppercase tracking-[0.15em] text-black">
+                        PAYMENT INSTRUCTIONS ({formData.paymentMethod.toUpperCase()}):
+                      </p>
+                      <p className="text-black/70 leading-relaxed">
+                        Please send the full amount including delivery charge (<span className="font-bold text-black">৳ {grandTotal.toLocaleString()}</span>) to{" "}
+                        <span className="font-bold text-black">
+                          {formData.paymentMethod === "bkash" ? "01847791140 (bKash)" : "01706379209 (Nagad)"}
+                        </span>.
+                      </p>
+                    </div>
+                  )}
 
-                {/* TRANSACTION VERIFICATION INPUTS (ONLY WHEN ADVANCE / DIGITAL PAYMENT APPLIES) */}
-                {requiresAdvancePayment && (
+                  {/* TRANSACTION VERIFICATION INPUTS */}
                   <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 border-t border-black/10 pt-4">
                     <div>
                       <label className="mb-1.5 block text-black/60 text-[9px] tracking-[0.15em] uppercase font-medium">
@@ -478,7 +446,7 @@ function CheckoutContent() {
                       <input
                         type="tel"
                         name="senderPhone"
-                        required={requiresAdvancePayment}
+                        required={!isDhaka}
                         placeholder="01XXXXXXXXX"
                         value={formData.senderPhone}
                         onChange={handleInputChange}
@@ -492,7 +460,7 @@ function CheckoutContent() {
                       <input
                         type="text"
                         name="transactionId"
-                        required={requiresAdvancePayment}
+                        required={!isDhaka}
                         placeholder="e.g. BXA8923JK"
                         value={formData.transactionId}
                         onChange={handleInputChange}
@@ -500,8 +468,8 @@ function CheckoutContent() {
                       />
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
