@@ -243,10 +243,10 @@ export default function ProductDetailPage({
     );
   }
 
-  const formattedPrice =
-    product
-      ? product.price_formatted || `৳ ${Number(product.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
-      : "";
+  const formattedPrice = product
+    ? product.price_formatted ||
+      `৳ ${Number(product.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+    : "";
 
   const descriptionBullets = product?.description
     ? product.description
@@ -278,11 +278,9 @@ export default function ProductDetailPage({
           <>
             <main className="mx-auto max-w-[1600px] px-6 pt-28 pb-24 sm:px-12">
               <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
-                
-                {/* LEFT: GALLERY & BUTTERY-SMOOTH CAROUSEL */}
+                {/* LEFT: GALLERY & CENTERED CAROUSEL */}
                 <div className="flex flex-col items-center lg:col-span-7 w-full">
                   <div className="group relative w-full max-w-[650px]">
-                    
                     {isOutOfStock && (
                       <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/40 backdrop-blur-[2px]">
                         <span className="bg-black px-4 py-2 text-[10px] font-medium tracking-[0.3em] uppercase text-white shadow-md">
@@ -291,28 +289,30 @@ export default function ProductDetailPage({
                       </div>
                     )}
 
-                    {/* Smooth mobile momentum slider */}
+                    {/* Smooth centered slider */}
                     <div
                       ref={scrollContainerRef}
                       onScroll={handleScroll}
-                      className="flex aspect-[4/5] w-full overflow-x-auto snap-x snap-mandatory touch-pan-x bg-transparent [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth"
+                      className="flex aspect-[4/5] w-full overflow-x-auto snap-x snap-mandatory snap-always touch-pan-x bg-transparent [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                       style={{ WebkitOverflowScrolling: "touch" }}
                     >
                       {images.map((img, idx) => (
                         <div
                           key={idx}
-                          className="relative h-full w-full shrink-0 snap-center select-none"
+                          className="relative flex h-full w-full shrink-0 snap-center items-center justify-center select-none"
                         >
-                          <Image
-                            src={img}
-                            alt={`${product.name} image ${idx + 1}`}
-                            fill
-                            priority={idx === 0}
-                            sizes="(max-width: 1024px) 100vw, 650px"
-                            className={`object-contain object-center mix-blend-multiply transition-transform duration-700 ease-out group-hover:scale-[1.02] ${
-                              isOutOfStock ? "opacity-60" : ""
-                            }`}
-                          />
+                          <div className="relative flex h-full w-full items-center justify-center">
+                            <Image
+                              src={img}
+                              alt={`${product.name} image ${idx + 1}`}
+                              fill
+                              priority={idx === 0}
+                              sizes="(max-width: 1024px) 100vw, 650px"
+                              className={`object-contain object-center mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-[1.02] ${
+                                isOutOfStock ? "opacity-60" : ""
+                              }`}
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -456,7 +456,7 @@ export default function ProductDetailPage({
                     >
                       {!isOutOfStock && (
                         <svg className="h-4 w-4 fill-current transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
-                          <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+                          <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
                         </svg>
                       )}
                       <span>{isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}</span>
@@ -687,31 +687,37 @@ export default function ProductDetailPage({
 
             {/* FLOATING STICKY BOTTOM BAR */}
             <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between border-t border-black/10 bg-white/90 px-4 py-3 backdrop-blur-md sm:px-12 transition-all">
-              <div className="flex items-center gap-3 sm:gap-4 truncate mr-2">
-                <div className="relative h-9 w-9 shrink-0 overflow-hidden bg-transparent">
-                  <Image src={images[0]} alt={product.name} fill className="object-contain mix-blend-multiply" />
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0 mr-3">
+                <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden bg-transparent">
+                  <Image
+                    src={images[currentImgIndex] || images[0]}
+                    alt={product.name}
+                    fill
+                    className="object-contain object-center mix-blend-multiply"
+                  />
                 </div>
-                <div className="truncate">
-                  <p className="text-[10px] font-medium tracking-widest uppercase truncate">{product.name}</p>
-                  <p className="text-[9px] text-black/40 uppercase">{selectedSize}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-medium tracking-widest uppercase text-black">
+                    {product.name}
+                  </p>
+                  <p className="text-[10px] tracking-wider text-black/60">
+                    {formattedPrice}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                <span className="hidden text-[10px] font-medium tracking-wider md:inline mr-2">{formattedPrice}</span>
-                <button
-                  type="button"
-                  disabled={isOutOfStock}
-                  onClick={handleBuyNow}
-                  className={`border px-5 py-2.5 text-[9px] font-medium tracking-[0.25em] uppercase transition-all duration-300 ${
-                    isOutOfStock
-                      ? "border-black/20 bg-black/10 text-black/40 cursor-not-allowed"
-                      : "border-black bg-black text-white hover:bg-black/80 cursor-pointer"
-                  }`}
-                >
-                  {isOutOfStock ? "OUT OF STOCK" : "CHECKOUT"}
-                </button>
-              </div>
+              <button
+                type="button"
+                disabled={isOutOfStock}
+                onClick={handleBuyNow}
+                className={`shrink-0 border px-6 py-2.5 text-[10px] font-medium tracking-[0.25em] uppercase transition-all duration-300 ${
+                  isOutOfStock
+                    ? "border-black/20 bg-black/10 text-black/40 cursor-not-allowed"
+                    : "border-black bg-black text-white hover:bg-black/80 cursor-pointer"
+                }`}
+              >
+                {isOutOfStock ? "OUT OF STOCK" : "CHECKOUT"}
+              </button>
             </div>
           </>
         )}
