@@ -279,7 +279,7 @@ export default function ProductDetailPage({
             <main className="mx-auto max-w-[1600px] px-6 pt-28 pb-24 sm:px-12">
               <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
                 {/* LEFT: GALLERY & CENTERED CAROUSEL */}
-                <div className="flex flex-col items-center lg:col-span-7 w-full">
+                <div className="flex flex-col items-center lg:col-span-7 w-full min-w-0">
                   <div className="group relative w-full max-w-[650px]">
                     {isOutOfStock && (
                       <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/40 backdrop-blur-[2px]">
@@ -299,7 +299,7 @@ export default function ProductDetailPage({
                       {images.map((img, idx) => (
                         <div
                           key={idx}
-                          className="relative flex h-full w-full shrink-0 snap-center items-center justify-center select-none"
+                          className="relative flex h-full w-full shrink-0 snap-center snap-stop-always items-center justify-center select-none"
                         >
                           <div className="relative flex h-full w-full items-center justify-center">
                             <Image
